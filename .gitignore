@@ -1,0 +1,37 @@
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
+.vercel/
+
+# Environment variables
+.env*.local
+
+# Common ignores
+node_modules
+.next/
+.DS_Store
+*.tsbuildinfo
+
+# Local workspace and generated presentation material
+CLAUDE.md
+output/
+tmp/
+landing.png
+dashboard.png
+scripts/create_architecture_diagram.py
+scripts/create_demo_script_pdf.py
+
+# Unused scaffold and compatibility files
+public/placeholder*
+public/apple-icon.png
+public/icon-dark-32x32.png
+public/icon-light-32x32.png
+components/LandingHeader.tsx
+components/HowItWorks.tsx
+lib/mock-data.ts
+
+# User-uploaded dataset (rebuilt at runtime; not committed)
+data/processed/active-summary.json

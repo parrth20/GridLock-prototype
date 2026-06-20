@@ -13,6 +13,7 @@
 // the dataset is never bundled into the browser.
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import type { DatasetMode, ParkingSummary } from "@/lib/types";
 import { generateSampleSummary } from "@/lib/server/sample-data";
@@ -24,14 +25,11 @@ const SUMMARY_PATH = path.join(
   "parking-summary.json",
 );
 
-// When a user uploads their own CSV we write the rebuilt aggregates here and
-// prefer them over the bundled file. Deleting it reverts to the sample data.
-const ACTIVE_PATH = path.join(
-  process.cwd(),
-  "data",
-  "processed",
-  "active-summary.json",
-);
+// When a user uploads their own CSV (or connects Bengaluru) we write the rebuilt
+// aggregates here and prefer them over the sample. We use the OS temp dir so it
+// also works on read-only serverless filesystems (e.g. Vercel, where only /tmp
+// is writable). Deleting it reverts to the sample data.
+const ACTIVE_PATH = path.join(os.tmpdir(), "clearlane-active-summary.json");
 
 const IST_OFFSET_MINUTES = 5 * 60 + 30;
 
@@ -125,9 +123,15 @@ export function loadBundledOfficialSummary(): ParkingSummary | null {
 
 /** Persist a summary as the active (connected) dataset. */
 export function setActiveSummary(summary: ParkingSummary): void {
-  fs.mkdirSync(path.dirname(ACTIVE_PATH), { recursive: true });
-  fs.writeFileSync(ACTIVE_PATH, JSON.stringify(summary), "utf-8");
+  // Update the in-memory cache first so the request always succeeds, even if
+  // the filesystem is read-only.
   cache = { summary, mode: modeForActive(summary) };
+  try {
+    fs.mkdirSync(path.dirname(ACTIVE_PATH), { recursive: true });
+    fs.writeFileSync(ACTIVE_PATH, JSON.stringify(summary), "utf-8");
+  } catch {
+    /* read-only filesystem (serverless) — keep the in-memory dataset */
+  }
 }
 
 /** Disconnect: remove the active dataset and revert to a fresh demo sample. */

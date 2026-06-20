@@ -6,6 +6,10 @@
 
 **An evidence-led parking-congestion command centre that turns raw violation data into decisions an officer can act on — which junctions, in what order, and exactly when.**
 
+[![Live Demo](https://img.shields.io/badge/▶%20Live%20Demo-ClearLane-22d3ee?style=for-the-badge&logo=vercel&logoColor=white)](https://tinyurl.com/ClearLane)
+
+### 🔗 Try it live → [tinyurl.com/ClearLane](https://tinyurl.com/ClearLane)
+
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -189,6 +193,8 @@ flowchart LR
 ---
 
 ## 🚀 Run locally
+
+> 🌐 **Live demo:** [tinyurl.com/ClearLane](https://tinyurl.com/ClearLane) — no setup needed.
 
 ```bash
 pnpm install

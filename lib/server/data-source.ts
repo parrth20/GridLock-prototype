@@ -103,9 +103,13 @@ function load(): { summary: ParkingSummary; mode: DatasetMode } {
     }
   }
 
-  // 2) Otherwise, the app is "disconnected" — show the synthetic demo sample.
-  cache = { summary: generateSampleSummary(sampleSeed), mode: "sample" };
-  return cache;
+  // 2) Otherwise, the app is disconnected and explicitly reports prototype mode.
+  const prototype = {
+    summary: generateSampleSummary(sampleSeed),
+    mode: "prototype" as const,
+  };
+  cache = prototype;
+  return prototype;
 }
 
 /** Clear the in-memory cache so the next read reloads. */

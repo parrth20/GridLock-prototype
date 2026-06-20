@@ -226,12 +226,12 @@ export function answerAssistant(input: {
     const top = forecast.zones;
     return reply(
       "forecast",
-      `For the ${forecast.shift.label} shift, the demand model expects the most violations at ${top[0]?.name ?? "—"} (≈${top[0]?.predictedPerDay ?? 0}/day). Predictions come from a harmonic-regression model fitted to the record (city-wide fit R² ${forecast.model.cityWideR2}), scaled by a weekday factor of ×${forecast.weekdayFactor}.`,
+      `For the ${forecast.shift.label} shift, the demand model expects the most violations at ${top[0]?.name ?? "—"} (≈${top[0]?.predictedPerDay ?? 0}/day). Predictions come from a harmonic-regression model fitted to the record and validated out-of-sample (cross-validated R² ${forecast.model.cvR2}), scaled by a weekday factor of ×${forecast.weekdayFactor}.`,
       top.map(
         (z) => `${z.name}: ≈${z.predictedPerDay}/day (95% CI ${z.predictedLower}–${z.predictedUpper}), ${z.confidence} confidence`,
       ),
       [
-        { label: "Model", value: `Harmonic regression, R² ${forecast.model.cityWideR2}`, basis: "forecast" },
+        { label: "Model", value: `Harmonic regression, cross-validated R² ${forecast.model.cvR2}`, basis: "forecast" },
         { label: "Shift", value: forecast.shift.label, basis: "forecast" },
       ],
       ["Generate a patrol plan for two units.", "Explain the risk methodology.", "What are the system limitations?"],
@@ -287,7 +287,7 @@ export function answerAssistant(input: {
     const acc = getModelAccuracy();
     return reply(
       "methodology",
-      `${METRIC_NAME}: ${METRIC_EXPLANATION} Forecasts use a separate ${acc.method.toLowerCase()} fitted to the data (city-wide fit R² ${acc.cityWideR2}, MAPE ${acc.meanMape}% across ${acc.junctionsModelled} junctions).`,
+      `${METRIC_NAME}: ${METRIC_EXPLANATION} Forecasts use a separate harmonic-regression demand model validated out-of-sample by leave-one-hour-out cross-validation (cross-validated R² ${acc.cvR2}, vs in-sample fit ${acc.cityWideR2}, across ${acc.junctionsModelled} junctions).`,
       [
         `Violation frequency — weight ${Math.round(RISK_WEIGHTS.frequency * 100)}%`,
         `Obstruction severity — weight ${Math.round(RISK_WEIGHTS.severity * 100)}%`,
@@ -297,7 +297,7 @@ export function answerAssistant(input: {
       ],
       [
         { label: "Risk metric", value: METRIC_NAME, basis: "calculated" },
-        { label: "Forecast model", value: `Harmonic regression, R² ${acc.cityWideR2}`, basis: "forecast" },
+        { label: "Forecast model", value: `Harmonic regression, cross-validated R² ${acc.cvR2}`, basis: "forecast" },
       ],
       ["Which zones have the highest risk?", "What is the forecast for the next shift?", "What are the system limitations?"],
     );

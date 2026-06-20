@@ -38,6 +38,9 @@ export async function GET(): Promise<Response> {
           weightedR2: a.weightedR2,
           meanMape: a.meanMape,
           cityWideR2: a.cityWideR2,
+          cvR2: a.cvR2,
+          cvMape: a.cvMape,
+          cityWideCvR2: a.cityWideCvR2,
         };
       })(),
       generatedAtIST: nowIST(),

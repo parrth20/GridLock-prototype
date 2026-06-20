@@ -129,7 +129,7 @@ sequenceDiagram
 - **Cinematic 3D landing** — a Bengaluru-inspired city model with traffic-data trails and motion controls.
 - **Interactive 2D & 3D hotspot maps** — click a junction, the camera focuses, a drawer explains it.
 - **Explainable Parking-Induced Congestion Risk Index** — a 0–100 score you can fully inspect.
-- **Fitted forecast model** — harmonic (Fourier) regression + weekday seasonality + Poisson intervals, with a reported accuracy.
+- **Validated forecast model** — harmonic (Fourier) regression + weekday seasonality + Poisson intervals, reported with **out-of-sample accuracy** from leave-one-hour-out cross-validation (no in-sample inflation).
 - **Constraint-based patrol planner** — ranks junctions for a shift and splits them across units, time-ordered.
 - **Event planning** — staffing, barricade and diversion suggestions for rallies, matches and festivals.
 - **ClearLane Sahayak** — a deterministic, dataset-grounded assistant (never invents anything, never issues challans).
@@ -260,7 +260,7 @@ ClearLane is honest about what it is — and isn't:
 - It measures **recorded violations**, not vehicle speed, occupancy or travel time.
 - It **never** issues challans and **never** touches personal or vehicle data (the dataset is anonymised and aggregated to the junction level).
 - No claim of years of data, no fabricated "X% congestion reduction", no real-time CCTV.
-- Forecasts are model **estimates** with intervals — clearly labelled, never guarantees.
+- Forecasts are model **estimates** with intervals — clearly labelled, never guarantees. Accuracy is reported **out-of-sample** (leave-one-hour-out cross-validation), not the inflated in-sample fit.
 
 ---
 

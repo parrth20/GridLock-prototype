@@ -67,7 +67,10 @@ export function ForecastView() {
     };
   }, [shift]);
 
-  const accuracyPct = data ? Math.round(data.model.cityWideR2 * 100) : 0;
+  // Headline accuracy is the OUT-OF-SAMPLE score (leave-one-hour-out CV) — the
+  // honest measure. In-sample fit is shown smaller for transparency.
+  const accuracyPct = data ? Math.round(data.model.cvR2 * 100) : 0;
+  const inSamplePct = data ? Math.round(data.model.cityWideR2 * 100) : 0;
   const maxExpected = data ? Math.max(1, ...data.zones.map((z) => z.predictedUpper)) : 1;
 
   return (
@@ -124,9 +127,12 @@ export function ForecastView() {
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-300">Smart forecast</p>
                     <p className="text-sm text-slate-200">
-                      <span className="font-bold text-emerald-300">{accuracyPct}%</span> accurate on past data
+                      <span className="font-bold text-emerald-300">{accuracyPct}%</span> accurate{" "}
+                      <span className="text-slate-400">(out-of-sample)</span>
                     </p>
-                    <p className="text-xs text-slate-500">{dayLabel(data.weekdayFactor)} · learns from 5 months of records</p>
+                    <p className="text-xs text-slate-500">
+                      Cross-validated · in-sample fit {inSamplePct}% · {dayLabel(data.weekdayFactor)}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 rounded-xl bg-violet-500/10 px-4 py-2.5">

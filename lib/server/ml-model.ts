@@ -51,8 +51,31 @@ const DESIGN: number[][] = Array.from({ length: 24 }, (_, h) => designRow(h));
 interface FitResult {
   coeffs: number[];
   fitted: number[]; // length 24, non-negative
-  r2: number;
-  mape: number;
+  r2: number; // in-sample
+  mape: number; // in-sample
+  cvR2: number; // out-of-sample (leave-one-hour-out cross-validation)
+  cvMape: number; // out-of-sample MAPE
+}
+
+/** Goodness-of-fit of predictions vs. actuals. */
+function score(y: number[], pred: number[]): { r2: number; mape: number } {
+  const mean = y.reduce((s, v) => s + v, 0) / y.length;
+  let ssRes = 0;
+  let ssTot = 0;
+  let mapeSum = 0;
+  let mapeN = 0;
+  for (let h = 0; h < y.length; h += 1) {
+    ssRes += (y[h] - pred[h]) ** 2;
+    ssTot += (y[h] - mean) ** 2;
+    if (y[h] > 0) {
+      mapeSum += Math.abs((y[h] - pred[h]) / y[h]);
+      mapeN += 1;
+    }
+  }
+  return {
+    r2: ssTot > 0 ? Math.max(-1, 1 - ssRes / ssTot) : 0,
+    mape: mapeN > 0 ? (mapeSum / mapeN) * 100 : 0,
+  };
 }
 
 function fitHarmonic(y: number[]): FitResult {
@@ -70,29 +93,29 @@ function fitHarmonic(y: number[]): FitResult {
   const coeffs = solveLinear(XtX, Xty);
   if (!coeffs) {
     // Fallback: empirical profile (perfect by construction, low information)
-    return { coeffs: [], fitted: [...y], r2: 0, mape: 0 };
+    return { coeffs: [], fitted: [...y], r2: 0, mape: 0, cvR2: 0, cvMape: 0 };
   }
-  const fitted = DESIGN.map((row) => {
-    const v = row.reduce((s, x, i) => s + x * coeffs[i], 0);
-    return Math.max(0, v);
-  });
+  const fitted = DESIGN.map((row) => Math.max(0, row.reduce((s, x, i) => s + x * coeffs[i], 0)));
+  const inSample = score(y, fitted);
 
+  // Leave-one-hour-out cross-validation: for each hour, refit on the other 23
+  // (rank-1 downdate of the normal equations) and predict the held-out hour.
+  // This is a genuine out-of-sample test — the model never saw that point.
+  const cvPred = new Array(24).fill(0);
   const mean = y.reduce((s, v) => s + v, 0) / 24;
-  let ssRes = 0;
-  let ssTot = 0;
-  let mapeSum = 0;
-  let mapeN = 0;
   for (let h = 0; h < 24; h += 1) {
-    ssRes += (y[h] - fitted[h]) ** 2;
-    ssTot += (y[h] - mean) ** 2;
-    if (y[h] > 0) {
-      mapeSum += Math.abs((y[h] - fitted[h]) / y[h]);
-      mapeN += 1;
+    const row = DESIGN[h];
+    const XtXl = XtX.map((r) => r.slice());
+    for (let i = 0; i < p; i += 1) {
+      for (let j = 0; j < p; j += 1) XtXl[i][j] -= row[i] * row[j];
     }
+    const Xtyl = Xty.map((v, i) => v - row[i] * y[h]);
+    const c = solveLinear(XtXl, Xtyl);
+    cvPred[h] = c ? Math.max(0, row.reduce((s, x, i) => s + x * c[i], 0)) : mean;
   }
-  const r2 = ssTot > 0 ? Math.max(-1, 1 - ssRes / ssTot) : 0;
-  const mape = mapeN > 0 ? (mapeSum / mapeN) * 100 : 0;
-  return { coeffs, fitted, r2, mape };
+  const cv = score(y, cvPred);
+
+  return { coeffs, fitted, r2: inSample.r2, mape: inSample.mape, cvR2: cv.r2, cvMape: cv.mape };
 }
 
 // ---- model assembly (cached) ----------------------------------------------
@@ -109,9 +132,12 @@ export interface ModelAccuracy {
   method: string;
   harmonics: number;
   junctionsModelled: number;
-  weightedR2: number; // record-weighted mean R² across junctions
-  meanMape: number; // mean absolute percentage error
-  cityWideR2: number; // fit on the aggregate city hourly demand curve
+  weightedR2: number; // in-sample, record-weighted mean R² across junctions
+  meanMape: number; // in-sample mean absolute percentage error
+  cityWideR2: number; // in-sample fit on the aggregate city hourly demand curve
+  cvR2: number; // OUT-OF-SAMPLE record-weighted R² (leave-one-hour-out CV)
+  cvMape: number; // OUT-OF-SAMPLE MAPE
+  cityWideCvR2: number; // OUT-OF-SAMPLE R² on the city demand curve
   weekdayIndex: { label: string; factor: number }[];
 }
 
@@ -130,6 +156,8 @@ function build(): BuiltModel {
   let weightedR2 = 0;
   let mapeSum = 0;
   let totalWeight = 0;
+  let cvWeightedR2 = 0;
+  let cvMapeSum = 0;
 
   for (const j of summary.junctions) {
     const fit = fitHarmonic(j.hourlyRecordCounts);
@@ -137,6 +165,8 @@ function build(): BuiltModel {
     junctions.set(j.id, { id: j.id, fitted: fit.fitted, total, r2: fit.r2, mape: fit.mape });
     weightedR2 += fit.r2 * total;
     mapeSum += fit.mape;
+    cvWeightedR2 += fit.cvR2 * total;
+    cvMapeSum += fit.cvMape;
     totalWeight += total;
   }
 
@@ -151,12 +181,16 @@ function build(): BuiltModel {
   const cityFit = fitHarmonic(summary.hourlyRecordCountsIST.map((h) => h.count));
 
   const accuracy: ModelAccuracy = {
-    method: "Harmonic (Fourier) regression + weekday seasonal index, Poisson intervals",
+    method:
+      "Harmonic (Fourier) regression + weekday seasonal index, Poisson intervals; validated by leave-one-hour-out cross-validation",
     harmonics: HARMONICS,
     junctionsModelled: junctions.size,
     weightedR2: totalWeight > 0 ? round(weightedR2 / totalWeight, 3) : 0,
     meanMape: junctions.size > 0 ? round(mapeSum / junctions.size, 1) : 0,
     cityWideR2: round(cityFit.r2, 3),
+    cvR2: totalWeight > 0 ? round(cvWeightedR2 / totalWeight, 3) : 0,
+    cvMape: junctions.size > 0 ? round(cvMapeSum / junctions.size, 1) : 0,
+    cityWideCvR2: round(cityFit.cvR2, 3),
     weekdayIndex: (weekday.length === 7 ? weekday : []).map((d, i) => ({
       label: d.label,
       factor: round(safeWeekdayFactors[i], 2),

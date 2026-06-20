@@ -203,9 +203,12 @@ export interface ModelMeta {
   method: string;
   harmonics: number;
   junctionsModelled: number;
-  weightedR2: number;
-  meanMape: number;
-  cityWideR2: number;
+  weightedR2: number; // in-sample
+  meanMape: number; // in-sample
+  cityWideR2: number; // in-sample
+  cvR2: number; // out-of-sample (leave-one-hour-out cross-validation)
+  cvMape: number; // out-of-sample
+  cityWideCvR2: number; // out-of-sample on the city demand curve
 }
 
 export interface ForecastResponse {

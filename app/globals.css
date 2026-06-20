@@ -1,0 +1,391 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Inter', 'Avenir Next', 'Segoe UI', Arial, sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  color-scheme: light;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ======================================================================== */
+/* ClearLane Bengaluru — civic command-centre design system                  */
+/* Navy / cyan / white / amber / critical-red, inspired by Bengaluru roads.  */
+/* ======================================================================== */
+
+:root {
+  --cl-navy-950: #030405;
+  --cl-navy-900: #06080d;
+  --cl-navy-850: #080b12;
+  --cl-navy-800: #0a0e16;
+  --cl-navy-700: #10151f;
+  --cl-navy-600: #161c28;
+  --cl-cyan: #22d3ee;
+  --cl-cyan-soft: #34e3f2;
+  --cl-amber: #f59e0b;
+  --cl-red: #ef4444;
+  --cl-green: #34d399;
+  --cl-ink: #f8fafc;
+  --cl-muted: #94a3b8;
+}
+
+/* Deep, near-black command-centre background with a faint cyan vignette */
+.cl-bg {
+  background-color: var(--cl-navy-900);
+  background-image: radial-gradient(
+    120% 80% at 80% -10%,
+    rgba(34, 211, 238, 0.08),
+    transparent 60%
+  );
+  color: var(--cl-ink);
+}
+
+/* Gradient accent text */
+.cl-gradient-text {
+  background-image: linear-gradient(100deg, #67e8f9, #22d3ee 55%, #38bdf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Soft accent glow for emphasis */
+.cl-glow {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.16),
+    0 18px 50px -12px rgba(34, 211, 238, 0.28);
+}
+
+/* Bengaluru street-grid coordinate backdrop */
+.cl-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(34, 211, 238, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 211, 238, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.cl-grid-bg-fine {
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Cinematic oversized hero typography */
+.cl-hero-title {
+  font-weight: 900;
+  font-size: clamp(3.3rem, 11vw, 10.5rem);
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.cl-display {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+
+/* Outlined-text treatment for a single keyword */
+.cl-outline {
+  color: transparent;
+  -webkit-text-stroke-width: clamp(1.4px, 0.32vw, 3px);
+  -webkit-text-stroke-color: var(--cl-cyan);
+  paint-order: stroke fill;
+}
+@supports not ((-webkit-text-stroke: 2px) or (text-stroke: 2px)) {
+  .cl-outline {
+    color: var(--cl-cyan);
+  }
+}
+
+/* Kannada / English microcopy label */
+.cl-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.26em;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* Zebra-crossing accent bar */
+.cl-zebra {
+  background-image: repeating-linear-gradient(
+    90deg,
+    currentColor 0 14px,
+    transparent 14px 30px
+  );
+}
+
+/* Minimal command-centre card */
+.cl-card {
+  background-color: rgba(10, 14, 22, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(10px);
+}
+.cl-card-hover {
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+.cl-card-hover:hover {
+  border-color: rgba(34, 211, 238, 0.35);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px -20px rgba(34, 211, 238, 0.4);
+}
+
+/* Gradient tile with a soft top highlight — less flat than a plain card */
+.cl-tile {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 42%),
+    rgba(13, 18, 28, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+.cl-tile-soft {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 50%),
+    rgba(10, 14, 22, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+/* Hairline rule that fades at both ends */
+.cl-hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.22), transparent);
+}
+
+/* Left accent strip on a card (set --accent inline) */
+.cl-accent {
+  position: relative;
+}
+.cl-accent::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 3px;
+  border-radius: 99px;
+  background: var(--accent, var(--cl-cyan));
+}
+
+/* Monospace time chip */
+.cl-time-chip {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Risk colour helpers */
+.cl-risk-critical { color: var(--cl-red); }
+.cl-risk-high { color: var(--cl-amber); }
+.cl-risk-moderate { color: var(--cl-cyan); }
+.cl-risk-low { color: var(--cl-green); }
+
+/* Animated data trail / pulse used by 2D overlays */
+@keyframes cl-pulse {
+  0% { transform: scale(0.85); opacity: 0.85; }
+  70% { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.cl-pulse-ring {
+  animation: cl-pulse 2.4s ease-out infinite;
+}
+@keyframes cl-streak {
+  0% { transform: translateX(-120%); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateX(220%); opacity: 0; }
+}
+.cl-streak { animation: cl-streak 4.5s linear infinite; }
+
+@keyframes cl-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.cl-blink { animation: cl-blink 1.6s ease-in-out infinite; }
+
+/* Focus + selection polish */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--cl-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+::selection {
+  background: rgba(34, 211, 238, 0.28);
+  color: #fff;
+}
+
+/* Dark scrollbars */
+.cl-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.cl-scroll::-webkit-scrollbar-track { background: transparent; }
+.cl-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 99px;
+}
+.cl-scroll::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.4); }
+
+/* Prevent horizontal overflow globally */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+/* Respect reduced-motion: neutralise CSS animations/transitions as a safety net.
+   (Framer Motion is additionally gated in components.) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

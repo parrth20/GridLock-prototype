@@ -203,6 +203,24 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+### 🐳 Run with Docker (one command)
+
+No Node or pnpm needed — just Docker:
+
+```bash
+docker compose up --build
+```
+
+…or with plain Docker:
+
+```bash
+docker build -t clearlane .
+docker run -p 3000:3000 clearlane
+```
+
+Then open [http://localhost:3000](http://localhost:3000). The image uses Next.js
+standalone output, so it stays small and starts fast.
+
 ### Verify
 
 ```bash

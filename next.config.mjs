@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Self-contained server bundle for a small Docker image (`node server.js`).
+  output: 'standalone',
   turbopack: {
     root: process.cwd(),
   },

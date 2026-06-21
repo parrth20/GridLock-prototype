@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.vercel
+.DS_Store
+npm-debug.log*
+*.log
+.env*.local
+data/processed/active-summary.json
+clearlane-demo-script.*
+README.md
+.github

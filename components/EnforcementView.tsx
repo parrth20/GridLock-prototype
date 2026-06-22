@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { ExternalLink, Loader2, Mic, Radio, Route, Square, Trash2, TriangleAlert, Wand2, X } from "lucide-react";
+import { ExternalLink, FileDown, Loader2, Mic, Radio, Route, Square, Trash2, TriangleAlert, Wand2, X } from "lucide-react";
 import { postEnforcementPlan } from "@/lib/api-client";
 import { useDashboardStore } from "@/lib/store";
 import type { EnforcementPlanResponse, PatrolUnitPlan } from "@/lib/types";
 import { RISK_HEX } from "@/lib/risk-ui";
 import { dispatch, speak, startRecording, stopRecording, playClip, ZELLO_CHANNEL_URL } from "@/lib/dispatch";
+import { downloadPatrolBrief } from "@/lib/patrol-brief";
+
+/** Shift length in hours, handling shifts that wrap past midnight. */
+function shiftLength(startHour: number, endHour: number): number {
+  const d = endHour - startHour;
+  return d > 0 ? d : 24 + d;
+}
 
 const PatrolRouteMap = dynamic(
   () => import("@/components/dashboard/PatrolRouteMap").then((m) => m.PatrolRouteMap),
@@ -200,17 +207,40 @@ export function EnforcementView() {
 
         {plan && !loading && (
           <>
-            {/* Coverage hero */}
-            <div className="cl-tile flex items-center justify-between gap-4 overflow-hidden rounded-2xl p-5">
-              <div>
-                <p className="text-sm font-bold text-white">Shift {plan.shift.label}</p>
-                <p className="mt-0.5 text-xs text-slate-400">{plan.candidateZoneCount} candidate junctions · {plan.patrolUnits} units</p>
-                <p className="mt-2 max-w-xs text-[11px] leading-relaxed text-slate-500">
-                  Estimated share of the modelled in-window risk these stops cover.
-                </p>
-              </div>
-              <CoverageRing pct={plan.estimatedRiskCoverage} />
-            </div>
+            {/* Impact panel */}
+            {(() => {
+              const shiftLen = shiftLength(plan.shift.startHour, plan.shift.endHour);
+              const officerHours = plan.patrolUnits * shiftLen;
+              const stops = plan.units.reduce((n, u) => n + u.zones.length, 0);
+              const perHour = officerHours > 0 ? plan.estimatedRiskCoverage / officerHours : 0;
+              return (
+                <div className="cl-tile overflow-hidden rounded-2xl p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-white">Shift impact · {plan.shift.label}</p>
+                      <p className="mt-0.5 text-xs text-slate-400">
+                        {plan.candidateZoneCount} candidate junctions · {plan.patrolUnits} unit{plan.patrolUnits === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    <CoverageRing pct={plan.estimatedRiskCoverage} />
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <Stat value={`${plan.estimatedRiskCoverage}%`} label="modelled pressure covered" />
+                    <Stat value={`${stops}`} label={`of ${plan.candidateZoneCount} junctions patrolled`} />
+                    <Stat value={`${officerHours}`} label="officer-hours" hint={`${plan.patrolUnits} × ${shiftLen}h`} />
+                    <Stat value={`${perHour.toFixed(1)}%`} label="pressure per officer-hour" />
+                  </div>
+
+                  <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+                    {plan.patrolUnits} unit{plan.patrolUnits === 1 ? "" : "s"} covering {stops} junction{stops === 1 ? "" : "s"} across their
+                    peak windows reach about <span className="text-slate-300">{plan.estimatedRiskCoverage}%</span> of the modelled
+                    parking-congestion pressure this shift, for roughly <span className="text-slate-300">{officerHours} officer-hours</span>.
+                    Coverage is a share of modelled risk — not a promised congestion reduction.
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* Routes on the real map */}
             <div className="h-80 overflow-hidden rounded-2xl border border-slate-800">
@@ -220,6 +250,13 @@ export function EnforcementView() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-slate-300">Patrol units</p>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => plan && downloadPatrolBrief(plan)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-cyan-400/50 hover:text-white"
+                >
+                  <FileDown className="h-3.5 w-3.5" /> Download brief
+                </button>
                 <button
                   type="button"
                   onClick={togglePTT}
@@ -347,7 +384,7 @@ export function EnforcementView() {
               ))}
             </ul>
             <p className="mt-2 text-[10px] text-slate-600">
-              Voice dispatch (prototype) — integrates with Zello / Motorola WAVE radios in production.
+              Voice dispatch plays in the browser — connects to Zello / Motorola WAVE radios in production.
             </p>
           </div>
         )}
@@ -362,5 +399,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1.5 block text-xs font-medium text-slate-400">{label}</span>
       {children}
     </label>
+  );
+}
+
+function Stat({ value, label, hint }: { value: string; label: string; hint?: string }) {
+  return (
+    <div className="rounded-xl border border-slate-800 bg-white/[0.02] p-3">
+      <p className="text-xl font-bold text-cyan-300">{value}</p>
+      <p className="mt-0.5 text-[11px] leading-tight text-slate-400">{label}</p>
+      {hint && <p className="mt-0.5 text-[10px] text-slate-600">{hint}</p>}
+    </div>
   );
 }

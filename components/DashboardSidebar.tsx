@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { ArrowLeft, CalendarClock, Layers, Route, TrendingUp } from "lucide-react";
 import { useDashboardStore, type DashboardTab } from "@/lib/store";
+import { useT, type StringKey } from "@/lib/i18n";
 import { Logo } from "@/components/Logo";
 
-const TABS: { id: DashboardTab; label: string; icon: typeof Layers; isNew?: boolean }[] = [
-  { id: "map", label: "Hotspots map", icon: Layers },
-  { id: "forecast", label: "Forecast", icon: TrendingUp },
-  { id: "enforcement", label: "Patrol plan", icon: Route },
-  { id: "events", label: "Event planning", icon: CalendarClock, isNew: true },
+const TABS: { id: DashboardTab; key: StringKey; icon: typeof Layers; isNew?: boolean }[] = [
+  { id: "map", key: "nav.map", icon: Layers },
+  { id: "forecast", key: "nav.forecast", icon: TrendingUp },
+  { id: "enforcement", key: "nav.enforcement", icon: Route },
+  { id: "events", key: "nav.events", icon: CalendarClock, isNew: true },
 ];
 
 export function DashboardSidebar() {
@@ -18,6 +19,7 @@ export function DashboardSidebar() {
   const activeTab = useDashboardStore((s) => s.activeTab);
   const setActiveTab = useDashboardStore((s) => s.setActiveTab);
   const patrolCount = useDashboardStore((s) => s.patrolPlan.length);
+  const t = useT();
 
   return (
     <>
@@ -37,7 +39,7 @@ export function DashboardSidebar() {
       >
         <div className="px-5 py-5">
           <Logo size={32} href="/" />
-          <p className="mt-1.5 pl-0.5 text-[11px] text-slate-500">Bengaluru Traffic Command</p>
+          <p className="mt-1.5 pl-0.5 text-[11px] text-slate-500">{t("nav.command")}</p>
         </div>
 
         <nav className="flex-1 space-y-1.5 px-3 py-2">
@@ -59,7 +61,7 @@ export function DashboardSidebar() {
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                <span className="flex-1 text-left">{tab.label}</span>
+                <span className="flex-1 text-left">{t(tab.key)}</span>
                 {tab.id === "enforcement" && patrolCount > 0 && (
                   <span className="rounded-full bg-cyan-400 px-1.5 text-[10px] font-bold text-slate-950">
                     {patrolCount}
@@ -67,7 +69,7 @@ export function DashboardSidebar() {
                 )}
                 {tab.isNew && (
                   <span className="rounded-full border border-cyan-400/40 bg-cyan-400/10 px-1.5 text-[9px] font-bold uppercase text-cyan-300">
-                    New
+                    {t("nav.new")}
                   </span>
                 )}
               </button>
@@ -76,11 +78,11 @@ export function DashboardSidebar() {
         </nav>
 
         <div className="px-4 pb-2">
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">Coming soon</p>
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">{t("nav.comingSoon")}</p>
           <ul className="space-y-1 text-[11px] text-slate-600">
-            <li>• Pan-India coverage</li>
-            <li>• Smarter AI chatbot</li>
-            <li>• Live camera detection</li>
+            <li>• {t("nav.panIndia")}</li>
+            <li>• {t("nav.chatbot")}</li>
+            <li>• {t("nav.camera")}</li>
           </ul>
         </div>
 
@@ -89,7 +91,7 @@ export function DashboardSidebar() {
             href="/"
             className="flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-800/60 hover:text-white"
           >
-            <ArrowLeft className="h-5 w-5" /> Back to overview
+            <ArrowLeft className="h-5 w-5" /> {t("nav.back")}
           </Link>
         </div>
       </aside>

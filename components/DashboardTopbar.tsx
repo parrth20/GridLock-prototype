@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Boxes, Database, Map as MapIcon, Menu } from "lucide-react";
 import { useDashboardStore } from "@/lib/store";
+import { useT } from "@/lib/i18n";
 import { useHealth } from "@/lib/hooks";
 import { DatasetUpload } from "@/components/dashboard/DatasetUpload";
 
@@ -21,6 +22,9 @@ export function DashboardTopbar() {
   const activeTab = useDashboardStore((s) => s.activeTab);
   const mapMode = useDashboardStore((s) => s.mapMode);
   const setMapMode = useDashboardStore((s) => s.setMapMode);
+  const lang = useDashboardStore((s) => s.lang);
+  const setLang = useDashboardStore((s) => s.setLang);
+  const t = useT();
   const { data: health } = useHealth();
   const [uploadOpen, setUploadOpen] = useState(false);
   const datasetMode = health?.datasetMode;
@@ -45,25 +49,44 @@ export function DashboardTopbar() {
             <span className={`relative inline-flex h-2 w-2 rounded-full ${connected ? "bg-emerald-400" : "bg-amber-400"}`} />
           </span>
           <span className={`text-xs font-semibold ${connected ? "text-emerald-200" : "text-amber-200"}`}>
-            {connected ? "Connected" : "Disconnected"}
+            {connected ? t("top.connected") : t("top.disconnected")}
           </span>
         </div>
 
         <div className="hidden min-w-0 flex-col leading-tight sm:flex">
           <span className="truncate text-xs text-slate-300">
             {datasetMode === "official-aggregates"
-              ? "Bengaluru data"
+              ? t("top.bengaluruData")
               : datasetMode === "uploaded"
-                ? "Your dataset"
-                : "Sample data (demo)"}
+                ? t("top.yourData")
+                : t("top.sampleData")}
           </span>
           <span className="truncate text-[10px] text-slate-500">
-            {health ? health.dataset.recordCount.toLocaleString() : "—"} records · updated {formatIST(health?.generatedAtIST)}
+            {health ? health.dataset.recordCount.toLocaleString() : "—"} {t("top.records")} · {t("top.updated")} {formatIST(health?.generatedAtIST)}
           </span>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Language toggle (English / Kannada) */}
+        <div className="flex items-center rounded-lg border border-slate-700 bg-slate-900/60 p-0.5 text-xs" role="group" aria-label="Language">
+          <button
+            type="button"
+            onClick={() => setLang("en")}
+            className={`rounded-md px-2 py-1.5 font-semibold transition ${lang === "en" ? "bg-cyan-400 text-slate-950" : "text-slate-400 hover:text-white"}`}
+            aria-pressed={lang === "en"}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => setLang("kn")}
+            className={`rounded-md px-2 py-1.5 font-semibold transition ${lang === "kn" ? "bg-cyan-400 text-slate-950" : "text-slate-400 hover:text-white"}`}
+            aria-pressed={lang === "kn"}
+          >
+            ಕನ್ನಡ
+          </button>
+        </div>
         {activeTab === "map" && (
           <div className="flex items-center rounded-lg border border-slate-700 bg-slate-900/60 p-0.5 text-xs">
             <button
@@ -93,7 +116,7 @@ export function DashboardTopbar() {
           onClick={() => setUploadOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-cyan-400/50 hover:text-white"
         >
-          <Database className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Upload data</span>
+          <Database className="h-3.5 w-3.5" /> <span className="hidden sm:inline">{t("top.upload")}</span>
         </button>
       </div>
     </header>

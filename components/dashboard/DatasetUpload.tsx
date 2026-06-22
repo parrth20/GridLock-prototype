@@ -11,7 +11,6 @@ import {
   X,
 } from "lucide-react";
 import {
-  connectBengaluruDataset,
   fetchDatasetMeta,
   resetDataset,
   uploadDataset,
@@ -57,27 +56,12 @@ export function DatasetUpload({ open, onClose }: { open: boolean; onClose: () =>
     }
   }
 
-  async function doConnect() {
-    setStatus({ kind: "working", text: "Connecting the Bengaluru dataset…" });
-    try {
-      const result = await connectBengaluruDataset();
-      setMeta(result);
-      setStatus({
-        kind: "success",
-        text: `Connected ${result.recordCount.toLocaleString()} real records · ${result.namedJunctions} junctions. Refreshing…`,
-      });
-      setTimeout(() => window.location.reload(), 1000);
-    } catch (e) {
-      setStatus({ kind: "error", text: (e as Error).message });
-    }
-  }
-
   async function doReset() {
-    setStatus({ kind: "working", text: "Reverting to sample data…" });
+    setStatus({ kind: "working", text: "Resetting to the Bengaluru data…" });
     try {
       const result = await resetDataset();
       setMeta(result);
-      setStatus({ kind: "success", text: "Back to the sample dataset. Refreshing…" });
+      setStatus({ kind: "success", text: "Back to the Bengaluru data. Refreshing…" });
       setTimeout(() => window.location.reload(), 900);
     } catch (e) {
       setStatus({ kind: "error", text: (e as Error).message });
@@ -97,7 +81,7 @@ export function DatasetUpload({ open, onClose }: { open: boolean; onClose: () =>
             </span>
             <div>
               <p className="text-sm font-bold text-white">Use your own data</p>
-              <p className="text-[11px] text-slate-500">Upload a violations CSV — the maps and models rebuild automatically.</p>
+              <p className="text-[11px] text-slate-500">The app runs on the real Bengaluru data by default. Upload a violations CSV to rebuild the maps and models on your own city.</p>
             </div>
           </div>
           <button onClick={onClose} disabled={busy} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-50" aria-label="Close">
@@ -124,18 +108,8 @@ export function DatasetUpload({ open, onClose }: { open: boolean; onClose: () =>
             </div>
           )}
 
-          {/* Connect the real Bengaluru data (no upload) */}
-          <button
-            type="button"
-            onClick={doConnect}
-            disabled={busy}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300 disabled:opacity-50"
-          >
-            <Database className="h-4 w-4" /> Use the real Bengaluru data
-          </button>
-
           <div className="flex items-center gap-3 text-[11px] text-slate-600">
-            <span className="h-px flex-1 bg-slate-800" /> or upload your own CSV <span className="h-px flex-1 bg-slate-800" />
+            <span className="h-px flex-1 bg-slate-800" /> upload your own CSV <span className="h-px flex-1 bg-slate-800" />
           </div>
 
           {/* File picker */}
@@ -186,7 +160,7 @@ export function DatasetUpload({ open, onClose }: { open: boolean; onClose: () =>
               disabled={busy || !meta?.usingUploaded}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white disabled:opacity-40"
             >
-              <RotateCcw className="h-3.5 w-3.5" /> Disconnect (demo sample)
+              <RotateCcw className="h-3.5 w-3.5" /> Reset to Bengaluru data
             </button>
             <button
               type="button"

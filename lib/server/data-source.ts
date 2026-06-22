@@ -92,7 +92,7 @@ function readSummaryFrom(file: string): ParkingSummary | null {
 function load(): { summary: ParkingSummary; mode: DatasetMode } {
   if (cache) return cache;
 
-  // 1) A connected dataset (uploaded CSV or the Bengaluru preset) takes priority.
+  // 1) A connected dataset (uploaded CSV or a re-connected preset) takes priority.
   if (fs.existsSync(ACTIVE_PATH)) {
     const active = readSummaryFrom(ACTIVE_PATH);
     if (active && active.source.recordCount > 0) {
@@ -101,13 +101,20 @@ function load(): { summary: ParkingSummary; mode: DatasetMode } {
     }
   }
 
-  // 2) Otherwise, the app is disconnected and explicitly reports prototype mode.
-  const prototype = {
-    summary: generateSampleSummary(sampleSeed),
-    mode: "prototype" as const,
-  };
-  cache = prototype;
-  return prototype;
+  // 2) Default: the real bundled Bengaluru aggregates. This file ships inside
+  //    every serverless instance, so the deployed app is always consistent —
+  //    no "connected but the map still shows the sample" race between
+  //    instances. Uploading a CSV (step 1) swaps in the user's own data.
+  const bundled = readSummaryFrom(SUMMARY_PATH);
+  if (bundled && bundled.source.recordCount > 0) {
+    cache = { summary: bundled, mode: "official-aggregates" };
+    return cache;
+  }
+
+  // 3) Last resort, only if the bundled file is somehow absent: a clearly
+  //    labelled synthetic sample so the UI still renders.
+  cache = { summary: generateSampleSummary(sampleSeed), mode: "prototype" };
+  return cache;
 }
 
 /** Clear the in-memory cache so the next read reloads. */
@@ -134,14 +141,13 @@ export function setActiveSummary(summary: ParkingSummary): void {
   }
 }
 
-/** Disconnect: remove the active dataset and revert to a fresh demo sample. */
+/** Reset: drop any uploaded dataset and revert to the bundled Bengaluru data. */
 export function clearActiveSummary(): void {
   try {
     if (fs.existsSync(ACTIVE_PATH)) fs.unlinkSync(ACTIVE_PATH);
   } catch {
     /* ignore */
   }
-  sampleSeed = ((Date.now() >>> 0) % 1_000_000) || 1;
   cache = null;
 }
 

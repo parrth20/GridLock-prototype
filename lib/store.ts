@@ -3,6 +3,7 @@ import type { Hotspot } from "@/lib/types";
 
 export type DashboardTab = "map" | "forecast" | "enforcement" | "events";
 export type MapMode = "3d" | "2d";
+export type Lang = "en" | "kn";
 
 export interface DispatchEntry {
   id: string;
@@ -35,6 +36,11 @@ interface DashboardStore {
   // 2D / 3D map
   mapMode: MapMode;
   setMapMode: (mode: MapMode) => void;
+
+  // UI language (English / Kannada)
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+  toggleLang: () => void;
 
   // Patrol plan basket
   patrolPlan: Hotspot[];
@@ -79,6 +85,10 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
 
   mapMode: "2d", // real OpenStreetMap view by default; 3D is one toggle away
   setMapMode: (mode) => set({ mapMode: mode }),
+
+  lang: "en",
+  setLang: (lang) => set({ lang }),
+  toggleLang: () => set((state) => ({ lang: state.lang === "en" ? "kn" : "en" })),
 
   patrolPlan: [],
   addToPatrolPlan: (hotspot) => {

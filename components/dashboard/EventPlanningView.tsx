@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { CalendarClock, Sparkles, Users } from "lucide-react";
+import { CalendarClock, Radio, Sparkles, Users } from "lucide-react";
 import { useHotspots } from "@/lib/hooks";
+import { useDashboardStore } from "@/lib/store";
+import { dispatch } from "@/lib/dispatch";
 import type { Hotspot } from "@/lib/types";
 import {
   BarricadeIcon,
@@ -42,6 +44,8 @@ export function EventPlanningView() {
     [hotspots, junctionId],
   );
 
+  const addDispatch = useDashboardStore((s) => s.addDispatch);
+
   const plan = useMemo(() => {
     if (!junction) return null;
     const s = SIZES[size];
@@ -52,6 +56,13 @@ export function EventPlanningView() {
     const extraPressurePct = Math.round((s.mult - 1) * 100);
     return { units, barricades, officers, extraPressurePct, mult: s.mult };
   }, [junction, size]);
+
+  function briefUnits() {
+    if (!junction || !plan) return;
+    const text = `Control to all units. Event at ${junction.name}. Deploy ${plan.units} patrol units and ${plan.barricades} barricade points. Suggested cordon ${SIZES[size].radiusM} metres. Stand by. Over.`;
+    dispatch("Event brief · all units", text);
+    addDispatch({ unitLabel: "All units", zoneName: junction.name, text });
+  }
 
   return (
     <div className="cl-scroll h-full overflow-y-auto bg-[#06080d] p-5 sm:p-7">
@@ -135,6 +146,14 @@ export function EventPlanningView() {
                 context={(hotspots ?? []).map((h) => [h.latitude, h.longitude] as [number, number])}
               />
             </div>
+
+            <button
+              type="button"
+              onClick={briefUnits}
+              className="inline-flex w-fit items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-300"
+            >
+              <Radio className="h-4 w-4" /> Brief patrol units (voice)
+            </button>
 
             <div className="cl-tile rounded-2xl p-5">
               <p className="flex items-center gap-2 text-sm font-bold text-white">

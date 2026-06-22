@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2, Route, Trash2, TriangleAlert, Wand2, X } from "lucide-react";
+import { Loader2, Radio, Route, Trash2, TriangleAlert, Wand2, X } from "lucide-react";
 import { postEnforcementPlan } from "@/lib/api-client";
 import { useDashboardStore } from "@/lib/store";
-import type { EnforcementPlanResponse } from "@/lib/types";
+import type { EnforcementPlanResponse, PatrolUnitPlan } from "@/lib/types";
 import { RISK_HEX } from "@/lib/risk-ui";
+import { dispatch, speak } from "@/lib/dispatch";
 
 const PatrolRouteMap = dynamic(
   () => import("@/components/dashboard/PatrolRouteMap").then((m) => m.PatrolRouteMap),
@@ -51,6 +52,9 @@ export function EnforcementView() {
   const removeFromPatrolPlan = useDashboardStore((s) => s.removeFromPatrolPlan);
   const clearPatrolPlan = useDashboardStore((s) => s.clearPatrolPlan);
   const selectHotspot = useDashboardStore((s) => s.selectHotspot);
+  const dispatchLog = useDashboardStore((s) => s.dispatchLog);
+  const addDispatch = useDashboardStore((s) => s.addDispatch);
+  const clearDispatchLog = useDashboardStore((s) => s.clearDispatchLog);
 
   const [units, setUnits] = useState(2);
   const [maxZones, setMaxZones] = useState(2);
@@ -82,6 +86,19 @@ export function EnforcementView() {
     generate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function dispatchUnit(unit: PatrolUnitPlan) {
+    if (unit.zones.length === 0) return;
+    const stops = unit.zones.map((z) => `${z.name} at ${z.window.label}`).join(", then ");
+    const text = `Control to ${unit.label}. Proceed to ${stops}. Over.`;
+    dispatch(`Dispatch · ${unit.label}`, text);
+    addDispatch({ unitLabel: unit.label, zoneName: unit.zones[0].name, text });
+  }
+
+  function dispatchAll() {
+    if (!plan) return;
+    plan.units.forEach((u, i) => setTimeout(() => dispatchUnit(u), i * 2600));
+  }
 
   return (
     <div className="cl-scroll h-full overflow-y-auto bg-[#06080d] p-5 sm:p-7">
@@ -182,6 +199,17 @@ export function EnforcementView() {
               <PatrolRouteMap units={plan.units} />
             </div>
 
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-slate-300">Patrol units</p>
+              <button
+                type="button"
+                onClick={dispatchAll}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-bold text-slate-950 transition hover:bg-cyan-300"
+              >
+                <Radio className="h-3.5 w-3.5" /> Dispatch all units
+              </button>
+            </div>
+
             {/* Patrol units */}
             <div className="grid gap-4 sm:grid-cols-2">
               {plan.units.map((unit) => (
@@ -190,15 +218,23 @@ export function EnforcementView() {
                   className="cl-accent cl-tile rounded-2xl p-4 pl-5"
                   style={{ ["--accent" as string]: "#38d6ee" }}
                 >
-                  <p className="flex items-center gap-2 text-sm font-bold text-white">
+                  <div className="flex items-center gap-2">
                     <span className="grid h-7 w-7 place-items-center rounded-lg bg-cyan-400/15 text-cyan-300">
                       <Route className="h-4 w-4" />
                     </span>
-                    {unit.label}
-                    <span className="ml-auto text-[11px] font-normal text-slate-500">
+                    <span className="text-sm font-bold text-white">{unit.label}</span>
+                    <span className="text-[11px] font-normal text-slate-500">
                       {unit.zones.length} stop{unit.zones.length === 1 ? "" : "s"}
                     </span>
-                  </p>
+                    <button
+                      type="button"
+                      onClick={() => dispatchUnit(unit)}
+                      disabled={unit.zones.length === 0}
+                      className="ml-auto inline-flex items-center gap-1 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-200 transition hover:bg-cyan-400/20 disabled:opacity-40"
+                    >
+                      <Radio className="h-3.5 w-3.5" /> Dispatch
+                    </button>
+                  </div>
                   <ol className="mt-3 space-y-2.5">
                     {unit.zones.length === 0 && <li className="text-xs text-slate-500">No zones assigned.</li>}
                     {unit.zones.map((z) => (
@@ -236,6 +272,41 @@ export function EnforcementView() {
               </ul>
             </div>
           </>
+        )}
+
+        {dispatchLog.length > 0 && (
+          <div className="cl-tile rounded-2xl p-4">
+            <div className="flex items-center justify-between">
+              <p className="flex items-center gap-2 text-sm font-bold text-white">
+                <Radio className="h-4 w-4 text-cyan-300" /> Radio dispatch log
+              </p>
+              <button onClick={clearDispatchLog} className="text-xs text-slate-400 transition hover:text-red-300">
+                Clear
+              </button>
+            </div>
+            <ul className="mt-3 space-y-2">
+              {dispatchLog.map((d) => (
+                <li key={d.id} className="flex items-start justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-2.5 text-xs">
+                  <div className="min-w-0">
+                    <p>
+                      <span className="font-mono text-slate-500">{d.timeIST}</span> ·{" "}
+                      <span className="font-semibold text-cyan-300">{d.unitLabel}</span>
+                    </p>
+                    <p className="mt-0.5 text-slate-400">{d.text}</p>
+                  </div>
+                  <button
+                    onClick={() => speak(d.text)}
+                    className="shrink-0 rounded-md border border-slate-700 px-2 py-1 text-[10px] text-slate-300 transition hover:text-white"
+                  >
+                    Repeat
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[10px] text-slate-600">
+              Voice dispatch (prototype) — integrates with Zello / Motorola WAVE radios in production.
+            </p>
+          </div>
         )}
       </div>
     </div>

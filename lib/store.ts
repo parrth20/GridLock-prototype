@@ -4,6 +4,14 @@ import type { Hotspot } from "@/lib/types";
 export type DashboardTab = "map" | "forecast" | "enforcement" | "events";
 export type MapMode = "3d" | "2d";
 
+export interface DispatchEntry {
+  id: string;
+  unitLabel: string;
+  zoneName: string;
+  text: string;
+  timeIST: string;
+}
+
 interface DashboardStore {
   // Selection
   selectedHotspot: Hotspot | null;
@@ -32,6 +40,11 @@ interface DashboardStore {
   addToPatrolPlan: (hotspot: Hotspot) => void;
   removeFromPatrolPlan: (id: string) => void;
   clearPatrolPlan: () => void;
+
+  // Radio dispatch log
+  dispatchLog: DispatchEntry[];
+  addDispatch: (entry: { unitLabel: string; zoneName: string; text: string }) => void;
+  clearDispatchLog: () => void;
 
   // Assistant
   assistantOpen: boolean;
@@ -74,6 +87,20 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   removeFromPatrolPlan: (id) =>
     set((state) => ({ patrolPlan: state.patrolPlan.filter((h) => h.id !== id) })),
   clearPatrolPlan: () => set({ patrolPlan: [] }),
+
+  dispatchLog: [],
+  addDispatch: (entry) =>
+    set((state) => ({
+      dispatchLog: [
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          timeIST: new Date().toLocaleTimeString(),
+          ...entry,
+        },
+        ...state.dispatchLog,
+      ].slice(0, 30),
+    })),
+  clearDispatchLog: () => set({ dispatchLog: [] }),
 
   assistantOpen: false,
   setAssistantOpen: (open) => set({ assistantOpen: open }),

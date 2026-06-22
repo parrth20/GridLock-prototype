@@ -27,14 +27,26 @@ export function EventMap({ lat, lng, name, radiusM, context = [] }: Props) {
     loadLeaflet()
       .then((L) => {
         if (cancelled || !containerRef.current || mapRef.current) return;
-        const map = L.map(containerRef.current, { zoomControl: true });
-        mapRef.current = map;
-        L.tileLayer(DARK_TILES.url, DARK_TILES.options).addTo(map);
-        context.forEach(([la, ln]) => {
-          L.circleMarker([la, ln], { radius: 2.5, weight: 0, fillColor: "#475569", fillOpacity: 0.5 }).addTo(map);
-        });
-        setReady(true);
-        setTimeout(() => map.invalidateSize(), 200);
+        try {
+          const map = L.map(containerRef.current, { zoomControl: true });
+          mapRef.current = map;
+          L.tileLayer(DARK_TILES.url, DARK_TILES.options).addTo(map);
+          context.forEach(([la, ln]) => {
+            if (Number.isFinite(la) && Number.isFinite(ln)) {
+              L.circleMarker([la, ln], { radius: 2.5, weight: 0, fillColor: "#475569", fillOpacity: 0.5 }).addTo(map);
+            }
+          });
+          setReady(true);
+          setTimeout(() => {
+            try {
+              map.invalidateSize();
+            } catch {
+              /* ignore */
+            }
+          }, 200);
+        } catch {
+          setError("Couldn't load the map.");
+        }
       })
       .catch(() => setError("Couldn't load the map."));
     return () => {
@@ -51,27 +63,37 @@ export function EventMap({ lat, lng, name, radiusM, context = [] }: Props) {
   useEffect(() => {
     const L = (window as any).L;
     const map = mapRef.current;
-    if (!L || !map) return;
-    if (markerRef.current) map.removeLayer(markerRef.current);
-    if (ringRef.current) map.removeLayer(ringRef.current);
-    ringRef.current = L.circle([lat, lng], {
-      radius: radiusM,
-      color: "#f7a93b",
-      weight: 2,
-      fillColor: "#f7a93b",
-      fillOpacity: 0.12,
-    }).addTo(map);
-    markerRef.current = L.circleMarker([lat, lng], {
-      radius: 7,
-      color: "#22d3ee",
-      weight: 2,
-      fillColor: "#22d3ee",
-      fillOpacity: 0.85,
-    }).addTo(map);
-    markerRef.current.bindPopup(
-      `<div style="font:13px/1.4 system-ui"><b>${name}</b><br/><span style="color:#f7a93b">Suggested cordon ~${radiusM} m</span></div>`,
-    );
-    map.fitBounds(ringRef.current.getBounds(), { padding: [30, 30] });
+    if (!L || !map || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    try {
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
+      if (ringRef.current) {
+        map.removeLayer(ringRef.current);
+        ringRef.current = null;
+      }
+      ringRef.current = L.circle([lat, lng], {
+        radius: radiusM,
+        color: "#f7a93b",
+        weight: 2,
+        fillColor: "#f7a93b",
+        fillOpacity: 0.12,
+      }).addTo(map);
+      markerRef.current = L.circleMarker([lat, lng], {
+        radius: 7,
+        color: "#22d3ee",
+        weight: 2,
+        fillColor: "#22d3ee",
+        fillOpacity: 0.85,
+      }).addTo(map);
+      markerRef.current.bindPopup(
+        `<div style="font:13px/1.4 system-ui"><b>${name}</b><br/><span style="color:#f7a93b">Suggested cordon ~${radiusM} m</span></div>`,
+      );
+      map.fitBounds(ringRef.current.getBounds(), { padding: [30, 30] });
+    } catch {
+      /* leaflet edge case — keep the existing view */
+    }
   }, [lat, lng, radiusM, name, ready]);
 
   useEffect(() => {

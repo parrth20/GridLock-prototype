@@ -84,7 +84,7 @@ export function DashboardTopbar() {
               }`}
               aria-pressed={mapMode === "2d"}
             >
-              <MapIcon className="h-3.5 w-3.5" /> 2D
+              <MapIcon className="h-3.5 w-3.5" /> Map
             </button>
           </div>
         )}

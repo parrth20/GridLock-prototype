@@ -63,7 +63,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   sidebarOpen: true,
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
 
-  mapMode: "3d",
+  mapMode: "2d", // real OpenStreetMap view by default; 3D is one toggle away
   setMapMode: (mode) => set({ mapMode: mode }),
 
   patrolPlan: [],

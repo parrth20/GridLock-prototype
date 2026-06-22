@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { Loader2, TriangleAlert } from "lucide-react";
 import { useDashboardStore } from "@/lib/store";
 import { useHotspots } from "@/lib/hooks";
-import { Hotspot2DMap } from "@/components/dashboard/Hotspot2DMap";
 
 const HotspotMap3D = dynamic(
   () => import("@/components/HotspotMap3D").then((m) => m.HotspotMap3D),
@@ -15,6 +14,20 @@ const HotspotMap3D = dynamic(
       <div className="grid h-full place-items-center bg-[#06080d]">
         <p className="flex items-center gap-2 text-sm text-slate-500">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading 3D map…
+        </p>
+      </div>
+    ),
+  },
+);
+
+const LeafletMap = dynamic(
+  () => import("@/components/dashboard/LeafletMap").then((m) => m.LeafletMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid h-full place-items-center bg-[#06080d]">
+        <p className="flex items-center gap-2 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading map…
         </p>
       </div>
     ),
@@ -84,10 +97,11 @@ export function MapPanel() {
       reduceMotion={reduceMotion}
     />
   ) : (
-    <Hotspot2DMap
+    <LeafletMap
       hotspots={hotspots}
       selectedId={selected?.id ?? null}
       onSelect={(h) => selectHotspot(h)}
+      reduceMotion={reduceMotion}
     />
   );
 }

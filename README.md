@@ -127,7 +127,7 @@ sequenceDiagram
 ## ✨ Features
 
 - **Cinematic 3D landing** — a Bengaluru-inspired city model with traffic-data trails and motion controls.
-- **Interactive 2D & 3D hotspot maps** — click a junction, the camera focuses, a drawer explains it.
+- **Real OpenStreetMap hotspot map** with a violation **heatmap**, plus a 3D view — click a junction, it flies in, and a drawer explains it.
 - **Explainable Parking-Induced Congestion Risk Index** — a 0–100 score you can fully inspect.
 - **Validated forecast model** — harmonic (Fourier) regression + weekday seasonality + Poisson intervals, reported with **out-of-sample accuracy** from leave-one-hour-out cross-validation (no in-sample inflation).
 - **Constraint-based patrol planner** — ranks junctions for a shift and splits them across units, time-ordered.

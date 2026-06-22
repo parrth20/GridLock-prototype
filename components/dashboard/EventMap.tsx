@@ -30,6 +30,10 @@ export function EventMap({ lat, lng, name, radiusM, context = [] }: Props) {
         try {
           const map = L.map(containerRef.current, { zoomControl: true });
           mapRef.current = map;
+          // Give the map a view immediately so tiles load (and so the cordon
+          // ring can project correctly in the next effect).
+          if (Number.isFinite(lat) && Number.isFinite(lng)) map.setView([lat, lng], 14);
+          else map.setView([12.9716, 77.5946], 12);
           L.tileLayer(DARK_TILES.url, DARK_TILES.options).addTo(map);
           context.forEach(([la, ln]) => {
             if (Number.isFinite(la) && Number.isFinite(ln)) {

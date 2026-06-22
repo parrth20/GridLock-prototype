@@ -2,10 +2,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from "react";
-import { Flame, Loader2, TriangleAlert } from "lucide-react";
+import { Flame, Layers, Loader2, TriangleAlert } from "lucide-react";
 import type { Hotspot, RiskLevel } from "@/lib/types";
 import { RISK_HEX } from "@/lib/risk-ui";
-import { loadLeaflet, DARK_TILES } from "@/lib/leaflet-loader";
+import { loadLeaflet, DARK_TILES, SATELLITE_TILES, LABELS_TILES } from "@/lib/leaflet-loader";
 
 interface Props {
   hotspots: Hotspot[];
@@ -20,10 +20,14 @@ export function LeafletMap({ hotspots, selectedId, onSelect, reduceMotion }: Pro
   const markersRef = useRef<Map<string, any>>(new Map());
   const heatRef = useRef<any>(null);
   const colorById = useRef<Map<string, string>>(new Map());
+  const tileRef = useRef<any>(null);
+  const labelsRef = useRef<any>(null);
+  const appliedBasemap = useRef<"dark" | "satellite">("dark");
 
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHeat, setShowHeat] = useState(true);
+  const [basemap, setBasemap] = useState<"dark" | "satellite">("dark");
 
   // Build the map once.
   useEffect(() => {
@@ -34,7 +38,8 @@ export function LeafletMap({ hotspots, selectedId, onSelect, reduceMotion }: Pro
         const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true });
         mapRef.current = map;
 
-        L.tileLayer(DARK_TILES.url, DARK_TILES.options).addTo(map);
+        tileRef.current = L.tileLayer(DARK_TILES.url, DARK_TILES.options).addTo(map);
+        appliedBasemap.current = "dark";
 
         const latlngs: [number, number][] = [];
         hotspots.forEach((h) => {
@@ -101,6 +106,33 @@ export function LeafletMap({ hotspots, selectedId, onSelect, reduceMotion }: Pro
     else map.removeLayer(heat);
   }, [showHeat, ready]);
 
+  // Swap basemap (dark ↔ satellite).
+  useEffect(() => {
+    const L = (window as any).L;
+    const map = mapRef.current;
+    if (!L || !map || appliedBasemap.current === basemap) return;
+    try {
+      if (tileRef.current) {
+        map.removeLayer(tileRef.current);
+        tileRef.current = null;
+      }
+      if (labelsRef.current) {
+        map.removeLayer(labelsRef.current);
+        labelsRef.current = null;
+      }
+      if (basemap === "satellite") {
+        tileRef.current = L.tileLayer(SATELLITE_TILES.url, SATELLITE_TILES.options).addTo(map);
+        labelsRef.current = L.tileLayer(LABELS_TILES.url, LABELS_TILES.options).addTo(map);
+      } else {
+        tileRef.current = L.tileLayer(DARK_TILES.url, DARK_TILES.options).addTo(map);
+      }
+      tileRef.current.bringToBack?.();
+      appliedBasemap.current = basemap;
+    } catch {
+      /* ignore */
+    }
+  }, [basemap, ready]);
+
   // Highlight + fly to the selected junction.
   useEffect(() => {
     const map = mapRef.current;
@@ -165,6 +197,15 @@ export function LeafletMap({ hotspots, selectedId, onSelect, reduceMotion }: Pro
         }`}
       >
         <Flame className="h-3.5 w-3.5" /> Heatmap {showHeat ? "on" : "off"}
+      </button>
+
+      {/* Basemap toggle */}
+      <button
+        type="button"
+        onClick={() => setBasemap((b) => (b === "dark" ? "satellite" : "dark"))}
+        className="absolute right-3 top-[3.25rem] z-[400] inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-xs font-medium text-slate-300 backdrop-blur transition hover:text-white"
+      >
+        <Layers className="h-3.5 w-3.5" /> {basemap === "dark" ? "Satellite" : "Map"}
       </button>
 
       {/* Legend */}

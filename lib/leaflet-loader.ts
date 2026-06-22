@@ -41,3 +41,22 @@ export const DARK_TILES = {
     maxZoom: 19,
   },
 };
+
+/** Free satellite imagery (Esri World Imagery — no API key). */
+export const SATELLITE_TILES = {
+  url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  options: {
+    attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
+    maxZoom: 19,
+  },
+};
+
+/** Place-name labels to overlay on the satellite view. */
+export const LABELS_TILES = {
+  url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
+  options: {
+    attribution: "",
+    subdomains: "abcd",
+    maxZoom: 19,
+  },
+};

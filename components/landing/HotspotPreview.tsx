@@ -1,10 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
 import { fetchHotspots } from "@/lib/api-client";
 import type { Hotspot, RiskLevel } from "@/lib/types";
+
+const LeafletMap = dynamic(
+  () => import("@/components/dashboard/LeafletMap").then((m) => m.LeafletMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="absolute inset-0 grid place-items-center">
+        <p className="animate-pulse text-sm text-slate-500">Loading map…</p>
+      </div>
+    ),
+  },
+);
 
 const RISK_COLOR: Record<RiskLevel, string> = {
   critical: "#ef4444",
@@ -30,29 +43,6 @@ export function HotspotPreview() {
       });
     return () => ctrl.abort();
   }, []);
-
-  const bounds = useMemo(() => {
-    if (!hotspots || hotspots.length === 0) return null;
-    const lats = hotspots.map((h) => h.latitude);
-    const lngs = hotspots.map((h) => h.longitude);
-    return {
-      minLat: Math.min(...lats),
-      maxLat: Math.max(...lats),
-      minLng: Math.min(...lngs),
-      maxLng: Math.max(...lngs),
-    };
-  }, [hotspots]);
-
-  const project = (h: Hotspot) => {
-    if (!bounds) return { x: 50, y: 50 };
-    const pad = 8;
-    const w = 100 - pad * 2;
-    const lngRange = bounds.maxLng - bounds.minLng || 1;
-    const latRange = bounds.maxLat - bounds.minLat || 1;
-    const x = pad + ((h.longitude - bounds.minLng) / lngRange) * w;
-    const y = pad + ((bounds.maxLat - h.latitude) / latRange) * w;
-    return { x, y };
-  };
 
   const selected = hotspots?.find((h) => h.id === selectedId) ?? null;
 
@@ -81,7 +71,6 @@ export function HotspotPreview() {
         <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
           {/* Map */}
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-slate-800 bg-[#0a0e16] sm:aspect-[16/9]">
-            <div className="cl-grid-bg-fine absolute inset-0 opacity-50" />
             {error && (
               <div className="absolute inset-0 grid place-items-center p-6 text-center">
                 <p className="text-sm text-slate-400">Couldn&apos;t load the preview: {error}</p>
@@ -92,32 +81,13 @@ export function HotspotPreview() {
                 <p className="animate-pulse text-sm text-slate-500">Loading junctions…</p>
               </div>
             )}
-            {hotspots && (
-              <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet">
-                {hotspots.map((h) => {
-                  const { x, y } = project(h);
-                  const r = 1.1 + (h.riskIndex / 100) * 2.6;
-                  const isSel = h.id === selectedId;
-                  return (
-                    <g key={h.id} className="cursor-pointer" onClick={() => setSelectedId(h.id)}>
-                      {isSel && (
-                        <circle cx={x} cy={y} r={r + 2.4} fill="none" stroke={RISK_COLOR[h.riskLevel]} strokeWidth={0.5} opacity={0.6} />
-                      )}
-                      <circle cx={x} cy={y} r={r} fill={RISK_COLOR[h.riskLevel]} opacity={isSel ? 1 : 0.78}>
-                        <title>{`${h.name} — index ${h.riskIndex} (${h.riskLevel}), busiest ${h.recommendedWindow.label}`}</title>
-                      </circle>
-                    </g>
-                  );
-                })}
-              </svg>
+            {hotspots && hotspots.length > 0 && (
+              <LeafletMap
+                hotspots={hotspots}
+                selectedId={selectedId}
+                onSelect={(h) => setSelectedId(h.id)}
+              />
             )}
-            <div className="absolute bottom-3 left-3 flex flex-wrap gap-2 text-[10px]">
-              {(["critical", "high", "moderate", "low"] as RiskLevel[]).map((lvl) => (
-                <span key={lvl} className="inline-flex items-center gap-1 rounded-full bg-slate-950/70 px-2 py-1 text-slate-300">
-                  <span className="h-2 w-2 rounded-full" style={{ background: RISK_COLOR[lvl] }} /> {lvl}
-                </span>
-              ))}
-            </div>
           </div>
 
           {/* Detail card */}

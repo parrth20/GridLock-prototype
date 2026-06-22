@@ -130,8 +130,8 @@ sequenceDiagram
 - **Real OpenStreetMap hotspot map** with a violation **heatmap**, plus a 3D view — click a junction, it flies in, and a drawer explains it.
 - **Explainable Parking-Induced Congestion Risk Index** — a 0–100 score you can fully inspect.
 - **Validated forecast model** — harmonic (Fourier) regression + weekday seasonality + Poisson intervals, reported with **out-of-sample accuracy** from leave-one-hour-out cross-validation (no in-sample inflation).
-- **Constraint-based patrol planner** — ranks junctions for a shift and splits them across units, time-ordered.
-- **Event planning** — staffing, barricade and diversion suggestions for rallies, matches and festivals.
+- **Constraint-based patrol planner** — ranks junctions for a shift and splits them across units, time-ordered, and draws each unit's route on the map.
+- **Event planning** — staffing, barricade and diversion suggestions for rallies, matches and festivals, with a suggested cordon ring on the map.
 - **ClearLane Sahayak** — a deterministic, dataset-grounded assistant (never invents anything, never issues challans).
 - **Bring your own data** — upload a CSV and the maps *and* the model rebuild automatically.
 

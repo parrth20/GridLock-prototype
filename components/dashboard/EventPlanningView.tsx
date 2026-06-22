@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { CalendarClock, Sparkles, Users } from "lucide-react";
 import { useHotspots } from "@/lib/hooks";
 import type { Hotspot } from "@/lib/types";
@@ -11,12 +12,24 @@ import {
   RoadClosureIcon,
 } from "@/components/icons/CivicIcons";
 
+const EventMap = dynamic(
+  () => import("@/components/dashboard/EventMap").then((m) => m.EventMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid h-full place-items-center bg-[#06080d] text-sm text-slate-500">
+        Loading map…
+      </div>
+    ),
+  },
+);
+
 type Size = "small" | "medium" | "large";
 
-const SIZES: Record<Size, { label: string; mult: number; units: number; barricades: number }> = {
-  small: { label: "Small (under 500 people)", mult: 1.3, units: 1, barricades: 2 },
-  medium: { label: "Medium (500–5,000)", mult: 1.8, units: 2, barricades: 4 },
-  large: { label: "Large (5,000+)", mult: 2.6, units: 4, barricades: 6 },
+const SIZES: Record<Size, { label: string; mult: number; units: number; barricades: number; radiusM: number }> = {
+  small: { label: "Small (under 500 people)", mult: 1.3, units: 1, barricades: 2, radiusM: 180 },
+  medium: { label: "Medium (500–5,000)", mult: 1.8, units: 2, barricades: 4, radiusM: 320 },
+  large: { label: "Large (5,000+)", mult: 2.6, units: 4, barricades: 6, radiusM: 550 },
 };
 
 export function EventPlanningView() {
@@ -110,6 +123,17 @@ export function EventPlanningView() {
               <PlanCard icon={<PatrolUnitIcon size={22} />} value={plan.units} label="Patrol units" hint="On-ground enforcement" />
               <PlanCard icon={<BarricadeIcon size={22} />} value={plan.barricades} label="Barricade points" hint="At main approach roads" />
               <PlanCard icon={<Users className="h-5 w-5" />} value={plan.officers} label="Officers (approx.)" hint="Patrols + barricades + control" />
+            </div>
+
+            {/* Location + suggested cordon */}
+            <div className="h-72 overflow-hidden rounded-2xl border border-slate-800">
+              <EventMap
+                lat={junction.latitude}
+                lng={junction.longitude}
+                name={junction.name}
+                radiusM={SIZES[size].radiusM}
+                context={(hotspots ?? []).map((h) => [h.latitude, h.longitude] as [number, number])}
+              />
             </div>
 
             <div className="cl-tile rounded-2xl p-5">

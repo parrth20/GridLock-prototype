@@ -1,11 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { Loader2, Route, Trash2, TriangleAlert, Wand2, X } from "lucide-react";
 import { postEnforcementPlan } from "@/lib/api-client";
 import { useDashboardStore } from "@/lib/store";
 import type { EnforcementPlanResponse } from "@/lib/types";
 import { RISK_HEX } from "@/lib/risk-ui";
+
+const PatrolRouteMap = dynamic(
+  () => import("@/components/dashboard/PatrolRouteMap").then((m) => m.PatrolRouteMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid h-full place-items-center bg-[#06080d] text-sm text-slate-500">
+        Loading routes…
+      </div>
+    ),
+  },
+);
 
 function CoverageRing({ pct }: { pct: number }) {
   const r = 30;
@@ -162,6 +175,11 @@ export function EnforcementView() {
                 </p>
               </div>
               <CoverageRing pct={plan.estimatedRiskCoverage} />
+            </div>
+
+            {/* Routes on the real map */}
+            <div className="h-80 overflow-hidden rounded-2xl border border-slate-800">
+              <PatrolRouteMap units={plan.units} />
             </div>
 
             {/* Patrol units */}

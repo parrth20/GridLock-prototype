@@ -101,6 +101,8 @@ export function buildPlan(input: PlanInput): EnforcementPlanResponse {
       hotspotId: c.hotspot.id,
       name: c.hotspot.name,
       policeStation: c.hotspot.policeStation,
+      latitude: c.hotspot.latitude,
+      longitude: c.hotspot.longitude,
       riskIndex: c.hotspot.riskIndex,
       riskLevel: c.hotspot.riskLevel,
       window: c.window,

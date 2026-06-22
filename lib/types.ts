@@ -231,6 +231,8 @@ export interface PlanZoneAssignment {
   hotspotId: string;
   name: string;
   policeStation: string;
+  latitude: number;
+  longitude: number;
   riskIndex: number;
   riskLevel: RiskLevel;
   window: RecommendedWindow;

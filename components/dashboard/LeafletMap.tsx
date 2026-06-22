@@ -5,37 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Flame, Loader2, TriangleAlert } from "lucide-react";
 import type { Hotspot, RiskLevel } from "@/lib/types";
 import { RISK_HEX } from "@/lib/risk-ui";
-
-// Leaflet is loaded from a CDN at runtime — no npm dependency, nothing to bundle.
-let leafletPromise: Promise<any> | null = null;
-function loadLeaflet(): Promise<any> {
-  if (leafletPromise) return leafletPromise;
-  leafletPromise = new Promise((resolve, reject) => {
-    if (typeof window === "undefined") return reject(new Error("no window"));
-    if ((window as any).L) return resolve((window as any).L);
-
-    const css = document.createElement("link");
-    css.rel = "stylesheet";
-    css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-    document.head.appendChild(css);
-
-    const js = document.createElement("script");
-    js.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    js.async = true;
-    js.onload = () => {
-      // Optional heatmap plugin — if it fails the markers still work.
-      const heat = document.createElement("script");
-      heat.src = "https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js";
-      heat.async = true;
-      heat.onload = () => resolve((window as any).L);
-      heat.onerror = () => resolve((window as any).L);
-      document.body.appendChild(heat);
-    };
-    js.onerror = () => reject(new Error("Failed to load Leaflet"));
-    document.body.appendChild(js);
-  });
-  return leafletPromise;
-}
+import { loadLeaflet, DARK_TILES } from "@/lib/leaflet-loader";
 
 interface Props {
   hotspots: Hotspot[];
@@ -64,11 +34,7 @@ export function LeafletMap({ hotspots, selectedId, onSelect, reduceMotion }: Pro
         const map = L.map(containerRef.current, { zoomControl: true, attributionControl: true });
         mapRef.current = map;
 
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-          attribution: "© OpenStreetMap contributors © CARTO",
-          subdomains: "abcd",
-          maxZoom: 19,
-        }).addTo(map);
+        L.tileLayer(DARK_TILES.url, DARK_TILES.options).addTo(map);
 
         const latlngs: [number, number][] = [];
         hotspots.forEach((h) => {

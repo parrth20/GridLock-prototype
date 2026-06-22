@@ -66,3 +66,65 @@ export function dispatch(title: string, text: string): void {
   setTimeout(() => speak(text), 160);
   void notify(title, text);
 }
+
+// --- Microphone push-to-talk -------------------------------------------------
+
+let mediaRecorder: any = null;
+let recStream: any = null;
+let recChunks: BlobPart[] = [];
+
+/** Begin recording from the mic. Returns false if unavailable/denied. */
+export async function startRecording(): Promise<boolean> {
+  try {
+    if (!navigator.mediaDevices?.getUserMedia || typeof (window as any).MediaRecorder === "undefined") {
+      return false;
+    }
+    recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recChunks = [];
+    mediaRecorder = new (window as any).MediaRecorder(recStream);
+    mediaRecorder.ondataavailable = (e: any) => {
+      if (e.data && e.data.size) recChunks.push(e.data);
+    };
+    mediaRecorder.start();
+    playSquelch();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Stop recording; resolves to an object URL for the clip (or null). */
+export function stopRecording(): Promise<string | null> {
+  return new Promise((resolve) => {
+    if (!mediaRecorder) return resolve(null);
+    mediaRecorder.onstop = () => {
+      try {
+        const blob = new Blob(recChunks, { type: mediaRecorder?.mimeType || "audio/webm" });
+        recStream?.getTracks().forEach((t: any) => t.stop());
+        mediaRecorder = null;
+        recStream = null;
+        playSquelch();
+        resolve(URL.createObjectURL(blob));
+      } catch {
+        resolve(null);
+      }
+    };
+    try {
+      mediaRecorder.stop();
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+export function playClip(url: string): void {
+  try {
+    const audio = new Audio(url);
+    void audio.play();
+  } catch {
+    /* ignore */
+  }
+}
+
+// Set this to your Zello (or Motorola WAVE) channel link to connect real radios.
+export const ZELLO_CHANNEL_URL = "";

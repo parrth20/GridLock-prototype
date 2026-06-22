@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Loader2, Radio, Route, Trash2, TriangleAlert, Wand2, X } from "lucide-react";
+import { ExternalLink, Loader2, Mic, Radio, Route, Square, Trash2, TriangleAlert, Wand2, X } from "lucide-react";
 import { postEnforcementPlan } from "@/lib/api-client";
 import { useDashboardStore } from "@/lib/store";
 import type { EnforcementPlanResponse, PatrolUnitPlan } from "@/lib/types";
 import { RISK_HEX } from "@/lib/risk-ui";
-import { dispatch, speak } from "@/lib/dispatch";
+import { dispatch, speak, startRecording, stopRecording, playClip, ZELLO_CHANNEL_URL } from "@/lib/dispatch";
 
 const PatrolRouteMap = dynamic(
   () => import("@/components/dashboard/PatrolRouteMap").then((m) => m.PatrolRouteMap),
@@ -63,6 +63,8 @@ export function EnforcementView() {
   const [plan, setPlan] = useState<EnforcementPlanResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [recError, setRecError] = useState<string | null>(null);
 
   async function generate() {
     setLoading(true);
@@ -98,6 +100,22 @@ export function EnforcementView() {
   function dispatchAll() {
     if (!plan) return;
     plan.units.forEach((u, i) => setTimeout(() => dispatchUnit(u), i * 2600));
+  }
+
+  async function togglePTT() {
+    if (recording) {
+      const url = await stopRecording();
+      setRecording(false);
+      if (url) {
+        addDispatch({ unitLabel: "Voice memo", zoneName: "Broadcast", text: "Recorded voice memo", audioUrl: url });
+        playClip(url);
+      }
+    } else {
+      setRecError(null);
+      const ok = await startRecording();
+      if (ok) setRecording(true);
+      else setRecError("Microphone unavailable or blocked.");
+    }
   }
 
   return (
@@ -199,16 +217,31 @@ export function EnforcementView() {
               <PatrolRouteMap units={plan.units} />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-slate-300">Patrol units</p>
-              <button
-                type="button"
-                onClick={dispatchAll}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-bold text-slate-950 transition hover:bg-cyan-300"
-              >
-                <Radio className="h-3.5 w-3.5" /> Dispatch all units
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={togglePTT}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                    recording
+                      ? "cl-blink border border-red-500/50 bg-red-500/15 text-red-200"
+                      : "border border-slate-700 text-slate-300 hover:text-white"
+                  }`}
+                >
+                  {recording ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                  {recording ? "Stop & send" : "Push to talk"}
+                </button>
+                <button
+                  type="button"
+                  onClick={dispatchAll}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-bold text-slate-950 transition hover:bg-cyan-300"
+                >
+                  <Radio className="h-3.5 w-3.5" /> Dispatch all units
+                </button>
+              </div>
             </div>
+            {recError && <p className="text-xs text-amber-300">{recError}</p>}
 
             {/* Patrol units */}
             <div className="grid gap-4 sm:grid-cols-2">
@@ -280,9 +313,19 @@ export function EnforcementView() {
               <p className="flex items-center gap-2 text-sm font-bold text-white">
                 <Radio className="h-4 w-4 text-cyan-300" /> Radio dispatch log
               </p>
-              <button onClick={clearDispatchLog} className="text-xs text-slate-400 transition hover:text-red-300">
-                Clear
-              </button>
+              <div className="flex items-center gap-3">
+                <a
+                  href={ZELLO_CHANNEL_URL || "https://zello.com"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-cyan-300 transition hover:text-cyan-200"
+                >
+                  <ExternalLink className="h-3 w-3" /> Connect radios
+                </a>
+                <button onClick={clearDispatchLog} className="text-xs text-slate-400 transition hover:text-red-300">
+                  Clear
+                </button>
+              </div>
             </div>
             <ul className="mt-3 space-y-2">
               {dispatchLog.map((d) => (
@@ -295,10 +338,10 @@ export function EnforcementView() {
                     <p className="mt-0.5 text-slate-400">{d.text}</p>
                   </div>
                   <button
-                    onClick={() => speak(d.text)}
+                    onClick={() => (d.audioUrl ? playClip(d.audioUrl) : speak(d.text))}
                     className="shrink-0 rounded-md border border-slate-700 px-2 py-1 text-[10px] text-slate-300 transition hover:text-white"
                   >
-                    Repeat
+                    {d.audioUrl ? "Play" : "Repeat"}
                   </button>
                 </li>
               ))}

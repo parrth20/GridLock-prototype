@@ -132,7 +132,7 @@ sequenceDiagram
 - **Validated forecast model** — harmonic (Fourier) regression + weekday seasonality + Poisson intervals, reported with **out-of-sample accuracy** from leave-one-hour-out cross-validation (no in-sample inflation).
 - **Constraint-based patrol planner** — ranks junctions for a shift and splits them across units, time-ordered, and draws each unit's route on the map.
 - **Event planning** — staffing, barricade and diversion suggestions for rallies, matches and festivals, with a suggested cordon ring on the map.
-- **Voice dispatch (push-to-talk)** — one click speaks the order to a unit aloud with a radio-style squelch, a browser notification, and a call-sheet log; designed to plug into Zello / Motorola WAVE radios in production.
+- **Voice dispatch (push-to-talk)** — speak the order to a unit aloud (radio squelch + notification + call-sheet log), or **record your own mic memo** and broadcast it; ready to plug into Zello / Motorola WAVE radios in production.
 - **ClearLane Sahayak** — a deterministic, dataset-grounded assistant (never invents anything, never issues challans).
 - **Bring your own data** — upload a CSV and the maps *and* the model rebuild automatically.
 

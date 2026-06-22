@@ -10,6 +10,7 @@ export interface DispatchEntry {
   zoneName: string;
   text: string;
   timeIST: string;
+  audioUrl?: string; // set when it's a recorded mic memo
 }
 
 interface DashboardStore {
@@ -43,7 +44,7 @@ interface DashboardStore {
 
   // Radio dispatch log
   dispatchLog: DispatchEntry[];
-  addDispatch: (entry: { unitLabel: string; zoneName: string; text: string }) => void;
+  addDispatch: (entry: { unitLabel: string; zoneName: string; text: string; audioUrl?: string }) => void;
   clearDispatchLog: () => void;
 
   // Assistant

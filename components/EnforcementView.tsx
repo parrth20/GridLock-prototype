@@ -28,30 +28,12 @@ const PatrolRouteMap = dynamic(
   },
 );
 
-function CoverageRing({ pct }: { pct: number }) {
-  const r = 30;
-  const c = 2 * Math.PI * r;
-  const off = c - (Math.max(0, Math.min(100, pct)) / 100) * c;
-  return (
-    <svg width={76} height={76} viewBox="0 0 76 76" className="shrink-0">
-      <circle cx={38} cy={38} r={r} fill="none" stroke="#1c2533" strokeWidth={6} />
-      <circle
-        cx={38}
-        cy={38}
-        r={r}
-        fill="none"
-        stroke="#38d6ee"
-        strokeWidth={6}
-        strokeDasharray={c}
-        strokeDashoffset={off}
-        strokeLinecap="round"
-        transform="rotate(-90 38 38)"
-      />
-      <text x={38} y={39} textAnchor="middle" dominantBaseline="middle" className="fill-white text-[16px] font-bold">
-        {pct}%
-      </text>
-    </svg>
-  );
+/** Friendly hour label, e.g. 8 → "8 AM", 14 → "2 PM". */
+function fmtHour(h: number): string {
+  const hh = ((h % 24) + 24) % 24;
+  const ampm = hh < 12 ? "AM" : "PM";
+  const h12 = hh % 12 === 0 ? 12 : hh % 12;
+  return `${h12} ${ampm}`;
 }
 
 export function EnforcementView() {
@@ -129,11 +111,11 @@ export function EnforcementView() {
     <div className="cl-scroll h-full overflow-y-auto bg-[#06080d] p-5 sm:p-7">
       <div className="mx-auto max-w-4xl space-y-6">
         <header>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/80">Deploy smart</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/80">Plan your shift</p>
           <h1 className="mt-1 text-2xl font-bold text-white sm:text-3xl">Patrol planning</h1>
-          <p className="mt-1.5 text-sm text-slate-400">
-            Rank junctions for a shift and split them across units. Coverage is a share
-            of modelled risk — not a promised congestion reduction.
+          <p className="mt-1.5 max-w-2xl text-sm text-slate-400">
+            Tell us how many units you have and your shift hours — we&rsquo;ll send them to the busiest
+            parking trouble-spots and split the work between them.
           </p>
         </header>
 
@@ -152,7 +134,7 @@ export function EnforcementView() {
           </div>
           {patrolPlan.length === 0 ? (
             <p className="mt-2 text-xs text-slate-500">
-              Pin zones from the map (&ldquo;Add to patrol plan&rdquo;) here. The plan below also auto-ranks the busiest zones for your shift.
+              Add junctions from the map here if you want to force them in — or just hit Generate below and we&rsquo;ll pick the busiest trouble-spots for your shift automatically.
             </p>
           ) : (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -175,16 +157,16 @@ export function EnforcementView() {
         {/* Controls */}
         <div className="cl-tile rounded-2xl p-5">
           <div className="grid gap-5 sm:grid-cols-4">
-            <Field label={`Patrol units · ${units}`}>
+            <Field label={`How many units · ${units}`}>
               <input type="range" min={1} max={6} value={units} onChange={(e) => setUnits(+e.target.value)} className="w-full accent-cyan-400" />
             </Field>
-            <Field label={`Max zones / unit · ${maxZones}`}>
+            <Field label={`Stops per unit · ${maxZones}`}>
               <input type="range" min={1} max={5} value={maxZones} onChange={(e) => setMaxZones(+e.target.value)} className="w-full accent-cyan-400" />
             </Field>
-            <Field label="Shift start (hr)">
+            <Field label={`Shift starts · ${fmtHour(start)}`}>
               <input type="number" min={0} max={23} value={start} onChange={(e) => setStart(Math.max(0, Math.min(23, +e.target.value)))} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" />
             </Field>
-            <Field label="Shift end (hr)">
+            <Field label={`Shift ends · ${fmtHour(end)}`}>
               <input type="number" min={0} max={24} value={end} onChange={(e) => setEnd(Math.max(0, Math.min(24, +e.target.value)))} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" />
             </Field>
           </div>
@@ -207,37 +189,31 @@ export function EnforcementView() {
 
         {plan && !loading && (
           <>
-            {/* Impact panel */}
+            {/* Plain-language plan summary */}
             {(() => {
               const shiftLen = shiftLength(plan.shift.startHour, plan.shift.endHour);
               const officerHours = plan.patrolUnits * shiftLen;
               const stops = plan.units.reduce((n, u) => n + u.zones.length, 0);
-              const perHour = officerHours > 0 ? plan.estimatedRiskCoverage / officerHours : 0;
               return (
                 <div className="cl-tile overflow-hidden rounded-2xl p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-bold text-white">Shift impact · {plan.shift.label}</p>
-                      <p className="mt-0.5 text-xs text-slate-400">
-                        {plan.candidateZoneCount} candidate junctions · {plan.patrolUnits} unit{plan.patrolUnits === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                    <CoverageRing pct={plan.estimatedRiskCoverage} />
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <Stat value={`${plan.estimatedRiskCoverage}%`} label="modelled pressure covered" />
-                    <Stat value={`${stops}`} label={`of ${plan.candidateZoneCount} junctions patrolled`} />
-                    <Stat value={`${officerHours}`} label="officer-hours" hint={`${plan.patrolUnits} × ${shiftLen}h`} />
-                    <Stat value={`${perHour.toFixed(1)}%`} label="pressure per officer-hour" />
-                  </div>
-
-                  <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-                    {plan.patrolUnits} unit{plan.patrolUnits === 1 ? "" : "s"} covering {stops} junction{stops === 1 ? "" : "s"} across their
-                    peak windows reach about <span className="text-slate-300">{plan.estimatedRiskCoverage}%</span> of the modelled
-                    parking-congestion pressure this shift, for roughly <span className="text-slate-300">{officerHours} officer-hours</span>.
-                    Coverage is a share of modelled risk — not a promised congestion reduction.
+                  <p className="text-sm font-bold text-white">Your plan for this shift</p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {plan.patrolUnits} unit{plan.patrolUnits === 1 ? "" : "s"} · {stops} stop{stops === 1 ? "" : "s"} ·{" "}
+                    {fmtHour(plan.shift.startHour)}–{fmtHour(plan.shift.endHour)}
                   </p>
+
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">
+                    We looked at all {plan.candidateZoneCount} junctions for this window and sent your{" "}
+                    {plan.patrolUnits} unit{plan.patrolUnits === 1 ? "" : "s"} to the{" "}
+                    <span className="font-semibold text-white">{stops} worst parking trouble-spot{stops === 1 ? "" : "s"}</span>.
+                    One shift can&rsquo;t sit on every junction — add more units above to reach more of them.
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    <Stat value={`${stops}`} label="junctions to visit" />
+                    <Stat value={`${shiftLen} hrs`} label="shift length" />
+                    <Stat value={`${officerHours}`} label="officer-hours" hint={`${plan.patrolUnits} units × ${shiftLen} hrs`} />
+                  </div>
                 </div>
               );
             })()}

@@ -49,9 +49,8 @@ export function PatrolPlanningDemo() {
             Turn a shift into a deployment in one click.
           </h2>
           <p className="mt-4 max-w-xl text-slate-400">
-            This calls the same <span className="font-mono text-cyan-300">/api/enforcement-plan</span>{" "}
-            endpoint the dashboard uses — ranking junctions for your shift and
-            splitting them across patrol units.
+            Set how many units you have and your shift hours. It ranks every junction for that
+            window and sends each unit to the worst parking trouble-spots — try it right here.
           </p>
         </div>
 
@@ -59,17 +58,17 @@ export function PatrolPlanningDemo() {
           {/* Controls */}
           <div className="cl-card rounded-2xl p-6">
             <div className="space-y-5">
-              <Field label={`Patrol units: ${units}`}>
+              <Field label={`How many units: ${units}`}>
                 <input type="range" min={1} max={6} value={units} onChange={(e) => setUnits(+e.target.value)} className="w-full accent-cyan-400" />
               </Field>
-              <Field label={`Max zones per unit: ${maxZones}`}>
+              <Field label={`Stops per unit: ${maxZones}`}>
                 <input type="range" min={1} max={5} value={maxZones} onChange={(e) => setMaxZones(+e.target.value)} className="w-full accent-cyan-400" />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Shift start (hr)">
+                <Field label={`Shift starts: ${fmtHour(start)}`}>
                   <input type="number" min={0} max={23} value={start} onChange={(e) => setStart(Math.max(0, Math.min(23, +e.target.value)))} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white" />
                 </Field>
-                <Field label="Shift end (hr)">
+                <Field label={`Shift ends: ${fmtHour(end)}`}>
                   <input type="number" min={0} max={24} value={end} onChange={(e) => setEnd(Math.max(0, Math.min(24, +e.target.value)))} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white" />
                 </Field>
               </div>
@@ -82,10 +81,13 @@ export function PatrolPlanningDemo() {
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                 {loading ? "Planning…" : "Generate patrol plan"}
               </button>
-              <div className="flex items-center justify-around pt-2 text-slate-500">
-                <TrafficPoliceIcon size={26} />
-                <PatrolUnitIcon size={26} />
-                <TowVehicleIcon size={26} />
+              <div className="pt-2">
+                <p className="mb-2 text-center text-[10px] uppercase tracking-wide text-slate-600">Who you&rsquo;re deploying</p>
+                <div className="flex items-center justify-around text-slate-500">
+                  <div className="flex flex-col items-center gap-1"><TrafficPoliceIcon size={24} /><span className="text-[9px] text-slate-600">Officers</span></div>
+                  <div className="flex flex-col items-center gap-1"><PatrolUnitIcon size={24} /><span className="text-[9px] text-slate-600">Patrol bikes</span></div>
+                  <div className="flex flex-col items-center gap-1"><TowVehicleIcon size={24} /><span className="text-[9px] text-slate-600">Tow units</span></div>
+                </div>
               </div>
             </div>
           </div>
@@ -94,7 +96,7 @@ export function PatrolPlanningDemo() {
           <div className="cl-card min-h-[320px] rounded-2xl p-6">
             {!plan && !error && !loading && (
               <div className="grid h-full place-items-center text-center text-sm text-slate-500">
-                <p>Set your shift parameters and generate a plan.</p>
+                <p>Set your units and shift hours, then generate a plan.</p>
               </div>
             )}
             {loading && (
@@ -112,11 +114,11 @@ export function PatrolPlanningDemo() {
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
                   <div>
                     <p className="text-sm font-bold text-white">Shift {plan.shift.label}</p>
-                    <p className="text-xs text-slate-500">{plan.candidateZoneCount} candidate junctions</p>
+                    <p className="text-xs text-slate-500">{plan.candidateZoneCount} junctions checked</p>
                   </div>
                   <div className="text-right">
-                    <p className="cl-display text-3xl text-cyan-300">{plan.estimatedRiskCoverage}%</p>
-                    <p className="text-[11px] text-slate-500">est. in-window risk covered (calculated)</p>
+                    <p className="cl-display text-3xl text-cyan-300">{plan.units.reduce((n, u) => n + u.zones.length, 0)}</p>
+                    <p className="text-[11px] text-slate-500">worst spots picked for this shift</p>
                   </div>
                 </div>
 
@@ -128,7 +130,7 @@ export function PatrolPlanningDemo() {
                       </p>
                       <ol className="mt-3 space-y-2">
                         {unit.zones.length === 0 && (
-                          <li className="text-xs text-slate-500">No zones assigned.</li>
+                          <li className="text-xs text-slate-500">No stops assigned.</li>
                         )}
                         {unit.zones.map((z) => (
                           <li key={z.hotspotId} className="flex items-center justify-between gap-2 text-xs">
@@ -154,6 +156,14 @@ export function PatrolPlanningDemo() {
       </div>
     </section>
   );
+}
+
+/** Friendly hour label, e.g. 8 → "8 AM", 14 → "2 PM". */
+function fmtHour(h: number): string {
+  const hh = ((h % 24) + 24) % 24;
+  const ampm = hh < 12 ? "AM" : "PM";
+  const h12 = hh % 12 === 0 ? 12 : hh % 12;
+  return `${h12} ${ampm}`;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {

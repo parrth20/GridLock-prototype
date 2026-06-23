@@ -30,27 +30,34 @@ function hasWebGL(): boolean {
   }
 }
 
-// Inline MapLibre style built on the same CARTO dark raster tiles the 2D map
-// uses — proven to load, no external style JSON, no API key. We tilt the camera
-// and raise an extruded "risk tower" at each hotspot for the 3D effect.
+// Inline MapLibre style on OpenStreetMap raster tiles. OSM sends CORS headers
+// (Access-Control-Allow-Origin: *), which WebGL needs to use tiles as GPU
+// textures — CARTO's raster endpoint does not, which is why it rendered black.
+// We darken the tiles with raster paint so they fit the dark theme. No API key.
 const RASTER_STYLE: any = {
   version: 8,
   sources: {
-    carto: {
+    osm: {
       type: "raster",
-      tiles: [
-        "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-        "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-        "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-      ],
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
       tileSize: 256,
-      attribution: "© OpenStreetMap contributors © CARTO",
+      maxzoom: 19,
+      attribution: "© OpenStreetMap contributors",
     },
   },
   layers: [
-    { id: "bg", type: "background", paint: { "background-color": "#06080d" } },
-    { id: "carto", type: "raster", source: "carto" },
+    { id: "bg", type: "background", paint: { "background-color": "#0a0e16" } },
+    {
+      id: "osm",
+      type: "raster",
+      source: "osm",
+      paint: {
+        "raster-brightness-max": 0.55,
+        "raster-saturation": -0.35,
+        "raster-contrast": 0.12,
+        "raster-opacity": 0.92,
+      },
+    },
   ],
 };
 

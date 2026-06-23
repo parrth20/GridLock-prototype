@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, TriangleAlert } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { loadMapLibre } from "@/lib/cdn-loaders";
 import { RISK_HEX } from "@/lib/risk-ui";
 import type { Hotspot, RiskLevel } from "@/lib/types";
@@ -14,6 +14,20 @@ interface Props {
   onSelect: (h: Hotspot) => void;
   focusNonce?: number;
   reduceMotion?: boolean;
+  onFail?: () => void; // called when WebGL/MapLibre can't render → parent shows 2D
+}
+
+/** Quick WebGL availability probe (Brave fingerprint protection often blocks it). */
+function hasWebGL(): boolean {
+  try {
+    const c = document.createElement("canvas");
+    return !!(
+      (window as any).WebGLRenderingContext &&
+      (c.getContext("webgl") || c.getContext("experimental-webgl"))
+    );
+  } catch {
+    return false;
+  }
 }
 
 // Inline MapLibre style built on the same CARTO dark raster tiles the 2D map
@@ -76,23 +90,32 @@ export function HotspotMapLibre3D({
   onSelect,
   focusNonce,
   reduceMotion,
+  onFail,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const hotspotsRef = useRef<Hotspot[]>(hotspots);
   const onSelectRef = useRef(onSelect);
+  const onFailRef = useRef(onFail);
   const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     hotspotsRef.current = hotspots;
     onSelectRef.current = onSelect;
-  }, [hotspots, onSelect]);
+    onFailRef.current = onFail;
+  }, [hotspots, onSelect, onFail]);
 
   // Build the map once.
   useEffect(() => {
     let cancelled = false;
+    let loadFired = false;
     const timers: ReturnType<typeof setTimeout>[] = [];
+
+    // No WebGL (e.g. Brave fingerprint protection) → tell the parent to use 2D.
+    if (!hasWebGL()) {
+      onFailRef.current?.();
+      return;
+    }
 
     loadMapLibre()
       .then((maplibregl) => {
@@ -110,6 +133,13 @@ export function HotspotMapLibre3D({
           });
           mapRef.current = map;
           map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+
+          // If the map hasn't painted in a few seconds, fall back to 2D.
+          timers.push(
+            setTimeout(() => {
+              if (!cancelled && !loadFired) onFailRef.current?.();
+            }, 4500),
+          );
 
           const addTowers = () => {
             try {
@@ -144,21 +174,23 @@ export function HotspotMapLibre3D({
           };
 
           map.on("load", () => {
+            loadFired = true;
             addTowers();
             map.resize();
             if (!cancelled) setReady(true);
           });
           // Belt-and-suspenders: make sure the canvas is sized to the panel.
+          requestAnimationFrame(() => mapRef.current?.resize());
           timers.push(setTimeout(() => mapRef.current?.resize(), 350));
           timers.push(setTimeout(() => mapRef.current?.resize(), 1200));
           map.on("error", () => {
             /* individual tile errors are non-fatal */
           });
         } catch {
-          setError("Couldn't load the 3D map.");
+          onFailRef.current?.(); // WebGL context creation failed → use 2D
         }
       })
-      .catch(() => setError("Couldn't load the 3D map (check your connection)."));
+      .catch(() => onFailRef.current?.());
 
     // Never leave the spinner up forever.
     timers.push(
@@ -222,19 +254,11 @@ export function HotspotMapLibre3D({
     <div className={`relative ${className ?? "h-full w-full"} bg-[#06080d]`}>
       <div ref={containerRef} className="absolute inset-0" />
 
-      {!ready && !error && (
+      {!ready && (
         <div className="absolute inset-0 z-10 grid place-items-center bg-[#06080d]">
           <p className="flex items-center gap-2 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading 3D map…
           </p>
-        </div>
-      )}
-      {error && (
-        <div className="absolute inset-0 z-10 grid place-items-center bg-[#06080d] p-6 text-center">
-          <div className="max-w-xs">
-            <TriangleAlert className="mx-auto h-7 w-7 text-amber-400" />
-            <p className="mt-3 text-sm text-slate-300">{error}</p>
-          </div>
         </div>
       )}
 

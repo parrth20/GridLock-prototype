@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Boxes, Database, Map as MapIcon, Menu } from "lucide-react";
+import { Boxes, Database, Map as MapIcon, Menu, Search } from "lucide-react";
 import { useDashboardStore } from "@/lib/store";
 import { useT } from "@/lib/i18n";
 import { useHealth } from "@/lib/hooks";
@@ -68,6 +68,15 @@ export function DashboardTopbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Command palette trigger */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent("cl:command"))}
+          className="hidden items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs font-medium text-slate-400 transition hover:border-cyan-400/50 hover:text-white sm:inline-flex"
+          aria-label="Search (Ctrl or Cmd + K)"
+        >
+          <Search className="h-3.5 w-3.5" /> <kbd className="text-[10px] text-slate-500">⌘K</kbd>
+        </button>
         {/* Language toggle (English / Kannada) */}
         <div className="flex items-center rounded-lg border border-slate-700 bg-slate-900/60 p-0.5 text-xs" role="group" aria-label="Language">
           <button

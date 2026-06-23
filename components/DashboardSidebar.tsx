@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, CalendarClock, Layers, Route, TrendingUp } from "lucide-react";
+import { Ambulance, ArrowLeft, CalendarClock, Layers, Route, TrendingUp } from "lucide-react";
 import { useDashboardStore, type DashboardTab } from "@/lib/store";
 import { useT, type StringKey } from "@/lib/i18n";
 import { Logo } from "@/components/Logo";
@@ -11,6 +11,7 @@ const TABS: { id: DashboardTab; key: StringKey; icon: typeof Layers; isNew?: boo
   { id: "forecast", key: "nav.forecast", icon: TrendingUp },
   { id: "enforcement", key: "nav.enforcement", icon: Route },
   { id: "events", key: "nav.events", icon: CalendarClock, isNew: true },
+  { id: "corridor", key: "nav.corridor", icon: Ambulance, isNew: true },
 ];
 
 export function DashboardSidebar() {

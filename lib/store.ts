@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { Hotspot } from "@/lib/types";
 
-export type DashboardTab = "map" | "forecast" | "enforcement" | "events";
+export type DashboardTab = "map" | "forecast" | "enforcement" | "events" | "corridor";
 export type MapMode = "3d" | "2d";
 export type Lang = "en" | "kn";
 

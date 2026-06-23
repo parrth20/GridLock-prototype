@@ -12,6 +12,7 @@ export const STRINGS = {
   "nav.forecast": { en: "Forecast", kn: "ಮುನ್ಸೂಚನೆ" },
   "nav.enforcement": { en: "Patrol plan", kn: "ಗಸ್ತು ಯೋಜನೆ" },
   "nav.events": { en: "Event planning", kn: "ಕಾರ್ಯಕ್ರಮ ಯೋಜನೆ" },
+  "nav.corridor": { en: "Green Corridor", kn: "ಗ್ರೀನ್ ಕಾರಿಡಾರ್" },
   "nav.new": { en: "New", kn: "ಹೊಸ" },
   "nav.comingSoon": { en: "Coming soon", kn: "ಶೀಘ್ರದಲ್ಲೇ" },
   "nav.panIndia": { en: "Pan-India coverage", kn: "ಪ್ಯಾನ್-ಇಂಡಿಯಾ ವ್ಯಾಪ್ತಿ" },

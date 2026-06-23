@@ -10,7 +10,9 @@ import { HotspotDetailsDrawer } from "@/components/HotspotDetailsDrawer";
 import { ForecastView } from "@/components/ForecastView";
 import { EnforcementView } from "@/components/EnforcementView";
 import { EventPlanningView } from "@/components/dashboard/EventPlanningView";
+import { GreenCorridorView } from "@/components/dashboard/GreenCorridorView";
 import { SahayakAssistant } from "@/components/assistant/SahayakAssistant";
+import { CommandPalette } from "@/components/CommandPalette";
 
 export default function DashboardPage() {
   const activeTab = useDashboardStore((s) => s.activeTab);
@@ -51,10 +53,17 @@ export default function DashboardPage() {
             <EventPlanningView />
           </div>
         )}
+
+        {activeTab === "corridor" && (
+          <div className="min-h-0 flex-1">
+            <GreenCorridorView />
+          </div>
+        )}
       </div>
 
       <HotspotDetailsDrawer />
       <SahayakAssistant />
+      <CommandPalette />
     </div>
   );
 }

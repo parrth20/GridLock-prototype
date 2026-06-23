@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, TrendingUp, TriangleAlert } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Grid3x3, Loader2, TrendingUp, TriangleAlert } from "lucide-react";
 import { fetchForecast } from "@/lib/api-client";
 import type { ForecastResponse } from "@/lib/types";
 import { RISK_HEX, riskTint, CONFIDENCE_STYLE, cap } from "@/lib/risk-ui";
+
+const HeatGrid = dynamic(() => import("@/components/dashboard/HeatGrid").then((m) => m.HeatGrid), {
+  ssr: false,
+  loading: () => (
+    <div className="grid h-[560px] place-items-center text-sm text-slate-500">Loading heat-grid…</div>
+  ),
+});
 
 type ShiftId = "late-night" | "morning" | "afternoon" | "evening";
 
@@ -205,6 +213,24 @@ export function ForecastView() {
             </div>
           </>
         )}
+
+        {/* Junction × hour heat-grid (observed) */}
+        <div className="cl-tile overflow-hidden rounded-2xl p-5">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-500/15 text-violet-300">
+              <Grid3x3 className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-bold text-white">When each hotspot peaks</p>
+              <p className="text-[11px] text-slate-500">
+                Observed violations by hour for the busiest junctions — darker is quieter, red is peak.
+              </p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <HeatGrid />
+          </div>
+        </div>
       </div>
     </div>
   );

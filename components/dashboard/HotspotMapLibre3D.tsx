@@ -16,8 +16,29 @@ interface Props {
   reduceMotion?: boolean;
 }
 
-// OpenFreeMap — free vector tiles + style, no API key, no signup.
-const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
+// Inline MapLibre style built on the same CARTO dark raster tiles the 2D map
+// uses — proven to load, no external style JSON, no API key. We tilt the camera
+// and raise an extruded "risk tower" at each hotspot for the 3D effect.
+const RASTER_STYLE: any = {
+  version: 8,
+  sources: {
+    carto: {
+      type: "raster",
+      tiles: [
+        "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+        "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+      ],
+      tileSize: 256,
+      attribution: "© OpenStreetMap contributors © CARTO",
+    },
+  },
+  layers: [
+    { id: "bg", type: "background", paint: { "background-color": "#06080d" } },
+    { id: "carto", type: "raster", source: "carto" },
+  ],
+};
 
 /** A small circular footprint (polygon ring) around a point, in metres. */
 function ring(lng: number, lat: number, radiusM: number, steps = 22): number[][][] {
@@ -40,10 +61,10 @@ function buildFC(hotspots: Hotspot[]) {
         id: h.id,
         name: h.name,
         riskIndex: h.riskIndex,
-        height: 50 + h.riskIndex * 6, // taller column = higher risk
+        height: 120 + h.riskIndex * 22, // taller column = higher risk
         color: RISK_HEX[h.riskLevel as RiskLevel],
       },
-      geometry: { type: "Polygon", coordinates: ring(h.longitude, h.latitude, 32) },
+      geometry: { type: "Polygon", coordinates: ring(h.longitude, h.latitude, 45) },
     })),
   };
 }
@@ -71,54 +92,28 @@ export function HotspotMapLibre3D({
   // Build the map once.
   useEffect(() => {
     let cancelled = false;
-    // Safety: never leave the spinner up forever if the style is slow.
-    const readyTimer = setTimeout(() => {
-      if (!cancelled) setReady(true);
-    }, 7000);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
     loadMapLibre()
       .then((maplibregl) => {
         if (cancelled || !containerRef.current || mapRef.current) return;
         try {
           const map = new maplibregl.Map({
             container: containerRef.current,
-            style: STYLE_URL,
+            style: RASTER_STYLE,
             center: [77.5946, 12.9716],
-            zoom: 11.2,
+            zoom: 11.3,
             pitch: 55,
             bearing: -18,
+            maxPitch: 70,
             attributionControl: true,
           });
           mapRef.current = map;
           map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
 
-          map.on("load", () => {
-            // Extrude real Bengaluru buildings from the vector source.
+          const addTowers = () => {
             try {
-              const style = map.getStyle();
-              const vectorId = Object.keys(style.sources || {}).find(
-                (id) => (style.sources as any)[id].type === "vector",
-              );
-              if (vectorId && !map.getLayer("cl-3d-buildings")) {
-                map.addLayer({
-                  id: "cl-3d-buildings",
-                  source: vectorId,
-                  "source-layer": "building",
-                  type: "fill-extrusion",
-                  minzoom: 13,
-                  paint: {
-                    "fill-extrusion-color": "#161d2b",
-                    "fill-extrusion-height": ["coalesce", ["get", "render_height"], 6],
-                    "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
-                    "fill-extrusion-opacity": 0.7,
-                  },
-                });
-              }
-            } catch {
-              /* style without a building layer — skip */
-            }
-
-            // Risk "towers": one extruded column per hotspot, height ∝ risk.
-            try {
+              if (map.getSource("cl-hotspots")) return;
               map.addSource("cl-hotspots", { type: "geojson", data: buildFC(hotspotsRef.current) } as any);
               map.addLayer({
                 id: "cl-hotspot-towers",
@@ -128,7 +123,7 @@ export function HotspotMapLibre3D({
                   "fill-extrusion-color": ["get", "color"],
                   "fill-extrusion-height": ["get", "height"],
                   "fill-extrusion-base": 0,
-                  "fill-extrusion-opacity": 0.9,
+                  "fill-extrusion-opacity": 0.92,
                 },
               });
               map.on("click", "cl-hotspot-towers", (e: any) => {
@@ -146,10 +141,16 @@ export function HotspotMapLibre3D({
             } catch {
               /* ignore */
             }
+          };
 
+          map.on("load", () => {
+            addTowers();
+            map.resize();
             if (!cancelled) setReady(true);
           });
-
+          // Belt-and-suspenders: make sure the canvas is sized to the panel.
+          timers.push(setTimeout(() => mapRef.current?.resize(), 350));
+          timers.push(setTimeout(() => mapRef.current?.resize(), 1200));
           map.on("error", () => {
             /* individual tile errors are non-fatal */
           });
@@ -159,9 +160,16 @@ export function HotspotMapLibre3D({
       })
       .catch(() => setError("Couldn't load the 3D map (check your connection)."));
 
+    // Never leave the spinner up forever.
+    timers.push(
+      setTimeout(() => {
+        if (!cancelled) setReady(true);
+      }, 6000),
+    );
+
     return () => {
       cancelled = true;
-      clearTimeout(readyTimer);
+      timers.forEach(clearTimeout);
       if (mapRef.current) {
         try {
           mapRef.current.remove();
@@ -217,7 +225,7 @@ export function HotspotMapLibre3D({
       {!ready && !error && (
         <div className="absolute inset-0 z-10 grid place-items-center bg-[#06080d]">
           <p className="flex items-center gap-2 text-sm text-slate-500">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading 3D city…
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading 3D map…
           </p>
         </div>
       )}

@@ -15,7 +15,6 @@ const RISK_COLOR: Record<RiskLevel, string> = {
 
 export function PatrolPlanningDemo() {
   const [units, setUnits] = useState(2);
-  const [maxZones, setMaxZones] = useState(2);
   const [start, setStart] = useState(8);
   const [end, setEnd] = useState(14);
   const [plan, setPlan] = useState<EnforcementPlanResponse | null>(null);
@@ -30,7 +29,8 @@ export function PatrolPlanningDemo() {
         shiftStartHour: start,
         shiftEndHour: end,
         patrolUnits: units,
-        maxZonesPerUnit: maxZones,
+        // Stops per unit come from the shift length on the server.
+        maxZonesPerUnit: 8,
       });
       setPlan(result);
     } catch (e) {
@@ -60,9 +60,6 @@ export function PatrolPlanningDemo() {
             <div className="space-y-5">
               <Field label={`How many units: ${units}`}>
                 <input type="range" min={1} max={6} value={units} onChange={(e) => setUnits(+e.target.value)} className="w-full accent-cyan-400" />
-              </Field>
-              <Field label={`Stops per unit: ${maxZones}`}>
-                <input type="range" min={1} max={5} value={maxZones} onChange={(e) => setMaxZones(+e.target.value)} className="w-full accent-cyan-400" />
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={`Shift starts: ${fmtHour(start)}`}>
@@ -114,7 +111,9 @@ export function PatrolPlanningDemo() {
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
                   <div>
                     <p className="text-sm font-bold text-white">Shift {plan.shift.label}</p>
-                    <p className="text-xs text-slate-500">{plan.candidateZoneCount} junctions checked</p>
+                    <p className="text-xs text-slate-500">
+                      {plan.candidateZoneCount} junctions checked · ~{plan.violationShare}% of this window&rsquo;s violations
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="cl-display text-3xl text-cyan-300">{plan.units.reduce((n, u) => n + u.zones.length, 0)}</p>
@@ -138,7 +137,7 @@ export function PatrolPlanningDemo() {
                               <span className="h-2 w-2 rounded-full" style={{ background: RISK_COLOR[z.riskLevel] }} />
                               {z.order}. {z.name}
                             </span>
-                            <span className="font-mono text-cyan-300">{z.window.label}</span>
+                            <span className="font-mono text-cyan-300">{z.slot.label}</span>
                           </li>
                         ))}
                       </ol>

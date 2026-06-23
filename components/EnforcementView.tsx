@@ -46,7 +46,6 @@ export function EnforcementView() {
   const clearDispatchLog = useDashboardStore((s) => s.clearDispatchLog);
 
   const [units, setUnits] = useState(2);
-  const [maxZones, setMaxZones] = useState(2);
   const [start, setStart] = useState(8);
   const [end, setEnd] = useState(14);
   const [plan, setPlan] = useState<EnforcementPlanResponse | null>(null);
@@ -63,7 +62,9 @@ export function EnforcementView() {
         shiftStartHour: start,
         shiftEndHour: end,
         patrolUnits: units,
-        maxZonesPerUnit: maxZones,
+        // Stops per unit are derived from the shift length on the server;
+        // pass a high ceiling so the shift length is what decides.
+        maxZonesPerUnit: 8,
       });
       setPlan(result);
     } catch (e) {
@@ -80,7 +81,7 @@ export function EnforcementView() {
 
   function dispatchUnit(unit: PatrolUnitPlan) {
     if (unit.zones.length === 0) return;
-    const stops = unit.zones.map((z) => `${z.name} at ${z.window.label}`).join(", then ");
+    const stops = unit.zones.map((z) => `${z.name} at ${z.slot.label}`).join(", then ");
     const text = `Control to ${unit.label}. Proceed to ${stops}. Over.`;
     dispatch(`Dispatch · ${unit.label}`, text);
     addDispatch({ unitLabel: unit.label, zoneName: unit.zones[0].name, text });
@@ -156,12 +157,9 @@ export function EnforcementView() {
 
         {/* Controls */}
         <div className="cl-tile rounded-2xl p-5">
-          <div className="grid gap-5 sm:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-3">
             <Field label={`How many units · ${units}`}>
               <input type="range" min={1} max={6} value={units} onChange={(e) => setUnits(+e.target.value)} className="w-full accent-cyan-400" />
-            </Field>
-            <Field label={`Stops per unit · ${maxZones}`}>
-              <input type="range" min={1} max={5} value={maxZones} onChange={(e) => setMaxZones(+e.target.value)} className="w-full accent-cyan-400" />
             </Field>
             <Field label={`Shift starts · ${fmtHour(start)}`}>
               <input type="number" min={0} max={23} value={start} onChange={(e) => setStart(Math.max(0, Math.min(23, +e.target.value)))} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white" />
@@ -203,15 +201,17 @@ export function EnforcementView() {
                   </p>
 
                   <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">
-                    We looked at all {plan.candidateZoneCount} junctions for this window and sent your{" "}
-                    {plan.patrolUnits} unit{plan.patrolUnits === 1 ? "" : "s"} to the{" "}
-                    <span className="font-semibold text-white">{stops} worst parking trouble-spot{stops === 1 ? "" : "s"}</span>.
-                    One shift can&rsquo;t sit on every junction — add more units above to reach more of them.
+                    A {shiftLen}-hour shift gives each unit time for about{" "}
+                    <span className="font-semibold text-white">{plan.stopsPerUnit} stop{plan.stopsPerUnit === 1 ? "" : "s"}</span>{" "}
+                    (≈1½ hours each). We picked the {stops} junction{stops === 1 ? "" : "s"} with the most violations in this
+                    window and gave each unit a timed route — together they cover about{" "}
+                    <span className="font-semibold text-cyan-300">{plan.violationShare}%</span> of every parking violation the
+                    city logs in this shift. Add units or widen the hours to cover more.
                   </p>
 
                   <div className="mt-4 grid grid-cols-3 gap-3">
                     <Stat value={`${stops}`} label="junctions to visit" />
-                    <Stat value={`${shiftLen} hrs`} label="shift length" />
+                    <Stat value={`${plan.violationShare}%`} label="of this shift's violations" />
                     <Stat value={`${officerHours}`} label="officer-hours" hint={`${plan.patrolUnits} units × ${shiftLen} hrs`} />
                   </div>
                 </div>
@@ -282,7 +282,7 @@ export function EnforcementView() {
                     </button>
                   </div>
                   <ol className="mt-3 space-y-2.5">
-                    {unit.zones.length === 0 && <li className="text-xs text-slate-500">No zones assigned.</li>}
+                    {unit.zones.length === 0 && <li className="text-xs text-slate-500">No stops assigned.</li>}
                     {unit.zones.map((z) => (
                       <li
                         key={z.hotspotId}
@@ -294,8 +294,13 @@ export function EnforcementView() {
                             <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: RISK_HEX[z.riskLevel] }} />
                             <span className="truncate">{z.order}. {z.name}</span>
                           </span>
-                          <span className="cl-time-chip shrink-0 rounded-md bg-slate-950/70 px-2 py-0.5 font-mono text-[11px] text-cyan-300">
-                            {z.window.label}
+                          <span className="flex shrink-0 items-center gap-1.5">
+                            {z.slot.onPeak && (
+                              <span className="rounded bg-emerald-400/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-300">peak</span>
+                            )}
+                            <span className="cl-time-chip rounded-md bg-slate-950/70 px-2 py-0.5 font-mono text-[11px] text-cyan-300">
+                              {z.slot.label}
+                            </span>
                           </span>
                         </div>
                         <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">{z.rationale}</p>

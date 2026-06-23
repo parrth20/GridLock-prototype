@@ -7,13 +7,13 @@ import { useDashboardStore } from "@/lib/store";
 import { useHotspots } from "@/lib/hooks";
 
 const HotspotMap3D = dynamic(
-  () => import("@/components/HotspotMap3D").then((m) => m.HotspotMap3D),
+  () => import("@/components/dashboard/HotspotMapLibre3D").then((m) => m.HotspotMapLibre3D),
   {
     ssr: false,
     loading: () => (
       <div className="grid h-full place-items-center bg-[#06080d]">
         <p className="flex items-center gap-2 text-sm text-slate-500">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading 3D map…
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading 3D city…
         </p>
       </div>
     ),

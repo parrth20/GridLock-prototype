@@ -45,3 +45,19 @@ export function loadECharts(): Promise<any> {
   }
   return echartsPromise;
 }
+
+let maplibrePromise: Promise<any> | null = null;
+/** MapLibre GL JS — real vector/3D maps (window.maplibregl). Loads its CSS too. */
+export function loadMapLibre(): Promise<any> {
+  if (typeof document !== "undefined" && !document.querySelector('link[data-cdn="maplibre"]')) {
+    const css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css";
+    css.dataset.cdn = "maplibre";
+    document.head.appendChild(css);
+  }
+  if (!maplibrePromise) {
+    maplibrePromise = loadScript("https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js", "maplibregl");
+  }
+  return maplibrePromise;
+}

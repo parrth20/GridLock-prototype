@@ -226,6 +226,14 @@ export interface ForecastResponse {
 
 // --- Enforcement plan -----------------------------------------------------
 
+/** A scheduled time block in a unit's shift itinerary. */
+export interface PatrolSlot {
+  startHour: number; // fractional hour, e.g. 9.5 = 09:30
+  endHour: number;
+  label: string; // "08:00–09:30"
+  onPeak: boolean; // does this block overlap the junction's busiest window?
+}
+
 export interface PlanZoneAssignment {
   order: number;
   hotspotId: string;
@@ -235,7 +243,8 @@ export interface PlanZoneAssignment {
   longitude: number;
   riskIndex: number;
   riskLevel: RiskLevel;
-  window: RecommendedWindow;
+  window: RecommendedWindow; // when the junction is busiest
+  slot: PatrolSlot; // when this unit is scheduled to be here
   topViolation: string;
   rationale: string;
 }
@@ -254,7 +263,9 @@ export interface EnforcementPlanResponse {
   maxZonesPerUnit: number;
   units: PatrolUnitPlan[];
   rankedZones: PlanZoneAssignment[];
-  estimatedRiskCoverage: number; // % of modelled in-window risk covered
+  estimatedRiskCoverage: number; // % of modelled in-window risk covered (legacy)
+  violationShare: number; // % of THIS window's violations the chosen stops account for
+  stopsPerUnit: number; // stops each unit can realistically work this shift
   candidateZoneCount: number;
   explanation: string;
   caveats: string[];
